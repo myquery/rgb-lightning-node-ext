@@ -37,14 +37,14 @@ use crate::{
     database::Database,
     disk::FilesystemLogger,
     error::{APIError, AppError},
-    hsm_provider::{HsmProvider, LocalHsmProvider},
     ldk::{
         BumpTxEventHandler, ChainMonitor, ChannelManager, InboundPaymentInfoStorage,
         LdkBackgroundServices, NetworkGraph, OnionMessenger, OutboundPaymentInfoStorage,
         OutputSweeper, PeerManager, SwapMap,
     },
-    user_manager::UserManager,
-    virtual_node::VirtualNodeManager,
+    user_manager_enhanced::UserManager,
+    multi_user_rgb::MultiUserRgbManager,
+    auth::AuthService,
 };
 
 // Load environment variables
@@ -60,6 +60,7 @@ pub(crate) const PROXY_ENDPOINT_LOCAL: &str = "rpc://127.0.0.1:3000/json-rpc";
 pub(crate) const PROXY_ENDPOINT_PUBLIC: &str = "rpcs://proxy.iriswallet.com/0.2/json-rpc";
 const PASSWORD_MIN_LENGTH: u8 = 8;
 
+/// Enhanced AppState with multi-user support
 pub(crate) struct AppState {
     pub(crate) static_state: Arc<StaticState>,
     pub(crate) cancel_token: CancellationToken,
@@ -68,8 +69,8 @@ pub(crate) struct AppState {
     pub(crate) changing_state: Mutex<bool>,
     pub(crate) database: Arc<TokioMutex<Option<Database>>>,
     pub(crate) user_manager: Arc<TokioMutex<Option<UserManager>>>,
-    pub(crate) hsm_service: Arc<TokioMutex<Option<Arc<dyn HsmProvider>>>>,
-    pub(crate) virtual_node_manager: Arc<TokioMutex<Option<Arc<VirtualNodeManager>>>>,
+    pub(crate) multi_user_rgb: Arc<TokioMutex<Option<MultiUserRgbManager>>>,
+    pub(crate) auth_service: Arc<TokioMutex<Option<AuthService>>>,
 }
 
 impl AppState {
@@ -85,6 +86,22 @@ impl AppState {
         &self,
     ) -> TokioMutexGuard<Option<Arc<UnlockedAppState>>> {
         self.unlocked_app_state.lock().await
+    }
+
+    /// Check if multi-user mode is enabled
+    pub(crate) async fn is_multi_user_enabled(&self) -> bool {
+        self.database.lock().await.is_some()
+    }
+
+    /// Get user manager if available
+    pub(crate) async fn get_user_manager(&self) -> Option<UserManager> {
+        self.user_manager.lock().await.clone()
+    }
+
+    /// Get multi-user RGB manager if available
+    pub(crate) async fn get_multi_user_rgb(&self) -> Option<MultiUserRgbManager> {
+        // Would return cloned manager
+        None // Simplified for now
     }
 }
 
@@ -350,6 +367,7 @@ pub(crate) fn parse_peer_info(
     Ok((pubkey.unwrap(), peer_addr))
 }
 
+/// Enhanced daemon startup with multi-user support
 pub(crate) async fn start_daemon(args: &LdkUserInfo) -> Result<Arc<AppState>, AppError> {
     // Initialize the Logger (creates ldk_data_dir and its logs directory)
     let ldk_data_dir = args.storage_dir_path.join(LDK_DIR);
@@ -361,7 +379,7 @@ pub(crate) async fn start_daemon(args: &LdkUserInfo) -> Result<Arc<AppState>, Ap
         ldk_peer_listening_port: args.ldk_peer_listening_port,
         network: args.network,
         storage_dir_path: args.storage_dir_path.clone(),
-        ldk_data_dir,
+        ldk_data_dir: ldk_data_dir.clone(),
         logger,
         max_media_upload_size_mb: args.max_media_upload_size_mb,
     });
@@ -369,15 +387,31 @@ pub(crate) async fn start_daemon(args: &LdkUserInfo) -> Result<Arc<AppState>, Ap
     // Load environment variables
     let _ = dotenv();
     
-    // Database will be initialized after unlock to avoid conflicts
+    // Initialize multi-user components
+    let database = Arc::new(TokioMutex::new(None));
+    let user_manager = Arc::new(TokioMutex::new(None));
+    let multi_user_rgb = Arc::new(TokioMutex::new(None));
+    let auth_service = Arc::new(TokioMutex::new(None));
+
+    // Check for multi-user configuration
     if std::env::var("DATABASE_URL").is_ok() {
         tracing::info!("DATABASE_URL found - multi-user support will be enabled after unlock");
+        
+        // Initialize auth service
+        let auth_config = crate::auth::AuthConfig::default();
+        let auth_svc = AuthService::new(auth_config);
+        *auth_service.lock().await = Some(auth_svc);
+        
+        // Initialize multi-user RGB manager
+        let rgb_manager = MultiUserRgbManager::new(
+            ldk_data_dir.clone(),
+            args.network,
+            PROXY_ENDPOINT_PUBLIC.to_string(),
+        );
+        *multi_user_rgb.lock().await = Some(rgb_manager);
     } else {
         tracing::info!("No DATABASE_URL found, running in single-user mode");
     }
-    
-    let database = Arc::new(TokioMutex::new(None));
-    let user_manager = Arc::new(TokioMutex::new(None));
 
     Ok(Arc::new(AppState {
         static_state,
@@ -387,8 +421,8 @@ pub(crate) async fn start_daemon(args: &LdkUserInfo) -> Result<Arc<AppState>, Ap
         changing_state: Mutex::new(false),
         database,
         user_manager,
-        hsm_service: Arc::new(TokioMutex::new(None)),
-        virtual_node_manager: Arc::new(TokioMutex::new(None)),
+        multi_user_rgb,
+        auth_service,
     }))
 }
 
@@ -458,7 +492,7 @@ pub(crate) fn get_route(
     route.ok()
 }
 
-// Function to initialize database after unlock
+/// Enhanced database initialization with multi-user support
 pub(crate) async fn initialize_database_after_unlock(app_state: &Arc<AppState>) -> Result<(), AppError> {
     if let Ok(database_url) = std::env::var("DATABASE_URL") {
         tracing::info!("Initializing PostgreSQL database for multi-user support after unlock");
@@ -466,22 +500,10 @@ pub(crate) async fn initialize_database_after_unlock(app_state: &Arc<AppState>) 
         let db = Database::new(&database_url).await
             .map_err(|e| AppError::Database(e.to_string()))?;
         
-        // Note: RGB database adapter disabled to avoid conflicts during RGB library initialization
-        // RGB library will use its own SQLite database in separate directory
-        
         let user_mgr = UserManager::new(db.clone());
         
         *app_state.database.lock().await = Some(db);
-        *app_state.user_manager.lock().await = Some(user_mgr.clone());
-        
-        // Initialize HSM provider after keys manager is available
-        if let Some(unlocked_state) = app_state.get_unlocked_app_state().await.as_ref() {
-            let hsm_provider: Arc<dyn HsmProvider> = Arc::new(LocalHsmProvider::new(unlocked_state.keys_manager.clone()));
-            let virtual_mgr = Arc::new(VirtualNodeManager::new(hsm_provider.clone(), Arc::new(user_mgr)));
-            
-            *app_state.hsm_service.lock().await = Some(hsm_provider.clone());
-            *app_state.virtual_node_manager.lock().await = Some(virtual_mgr);
-        }
+        *app_state.user_manager.lock().await = Some(user_mgr);
         
         tracing::info!("Multi-user database support enabled successfully");
     }

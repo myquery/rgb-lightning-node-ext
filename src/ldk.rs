@@ -98,7 +98,7 @@ use crate::utils::{
 };
 
 pub(crate) const FEE_RATE: u64 = 7;
-pub(crate) const UTXO_SIZE_SAT: u32 = 32000;
+pub(crate) const UTXO_SIZE_SAT: u32 = 1000;
 pub(crate) const MIN_CHANNEL_CONFIRMATIONS: u8 = 6;
 
 pub(crate) struct LdkBackgroundServices {
@@ -1639,14 +1639,19 @@ pub(crate) async fn start_ldk(
         get_account_data(bitcoin_network, &mnemonic_str, false).unwrap();
     let (_, account_xpub_colored, master_fingerprint) =
         get_account_data(bitcoin_network, &mnemonic_str, true).unwrap();
-    let data_dir = static_state
+    // Use separate subdirectory for RGB SQLite database to avoid conflicts
+    let rgb_data_dir = static_state
         .storage_dir_path
-        .clone()
+        .join("rgb_sqlite")
         .to_string_lossy()
         .to_string();
+    
+    // Ensure RGB SQLite directory exists
+    std::fs::create_dir_all(&rgb_data_dir).expect("Failed to create RGB SQLite directory");
+    
     let mut rgb_wallet = tokio::task::spawn_blocking(move || {
         RgbLibWallet::new(WalletData {
-            data_dir,
+            data_dir: rgb_data_dir,
             bitcoin_network,
             database_type: DatabaseType::Sqlite,
             max_allocations_per_utxo: 1,

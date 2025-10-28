@@ -505,4 +505,14 @@ impl IntoResponse for APIError {
 pub enum AppError {
     #[error("Port {0} is unavailable")]
     UnavailablePort(u16),
+    #[error("Database error: {0}")]
+    Database(String),
+    #[error("Generic error: {0}")]
+    Generic(String),
+}
+
+impl From<anyhow::Error> for AppError {
+    fn from(err: anyhow::Error) -> Self {
+        AppError::Generic(err.to_string())
+    }
 }

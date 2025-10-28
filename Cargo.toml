@@ -10,6 +10,7 @@ name = "rgb-lightning-node"
 [dependencies]
 amplify = { version = "=4.8.1", default-features = false }
 anyhow = "1.0.93"
+async-trait = "0.1.83"
 axum = { version = "0.7.7", features = ["multipart"] }
 axum-extra = "0.9.4"
 # axum-macros = "0.4.2"  # uncomment to use debug_handler
@@ -18,7 +19,7 @@ base64 = "0.22.1"
 bitcoin = "0.32"
 bitcoin-bech32 = "0.13"
 chacha20poly1305 = { version = "0.10.1", features = ["stream"] }
-chrono = { version = "0.4", default-features = false, features = ["clock"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
 clap = "4.5.20"
 dirs = "5.0.1"
 futures = "0.3"
@@ -33,13 +34,14 @@ lightning-rapid-gossip-sync = { version = "0.0.125", path = "./rust-lightning/li
 magic-crypt = "4.0.1"
 rand = "0.8.5"
 regex = { version = "1.11", default-features = false }
-rgb-lib = { version = "0.3.0-beta.1", features = [
+rgb-lib = { path = "./rgb-lib-extended", features = [
     "electrum",
     "esplora",
 ] }
 scrypt = "0.11.0"
 serde = { version = "^1.0", features = ["derive"] }
 serde_json = "1.0"
+sha2 = "0.10"
 tempfile = "3.14.0"
 thiserror = "2.0"
 time = { version = "0.3.36", features = ["std"] }
@@ -53,6 +55,8 @@ typenum = "1.17.0"
 uuid = { version = "1.11.0", default-features = false, features = ["v4"] }
 walkdir = "2.5.0"
 zip = { version = "2.2.0", default-features = false, features = ["time", "zstd"] }
+sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid", "migrate"] }
+dotenvy = "0.15"
 
 [dev-dependencies]
 dircmp = "0.2.0"
@@ -66,6 +70,7 @@ tracing-test = "0.2.5"
 [patch.crates-io]
 lightning = { path = "./rust-lightning/lightning" }
 lightning-background-processor = { path = "./rust-lightning/lightning-background-processor"}
+rgb-lib = { path = "./rgb-lib-extended" }
 
 [lints.rust.unexpected_cfgs]
 level = "allow"

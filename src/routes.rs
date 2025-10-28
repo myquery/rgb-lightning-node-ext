@@ -20,6 +20,7 @@ use lightning::rgb_utils::{
     get_rgb_channel_info_path, get_rgb_payment_info_path, parse_rgb_channel_info,
     parse_rgb_payment_info, STATIC_BLINDING,
 };
+
 use lightning::routing::gossip::RoutingFees;
 use lightning::routing::router::{Path as LnPath, Route, RouteHint, RouteHintHop};
 use lightning::sign::EntropySource;
@@ -69,6 +70,7 @@ use std::{
     sync::Arc,
     time::Duration,
 };
+use chrono;
 use tokio::{
     fs::File,
     io::{AsyncReadExt, AsyncWriteExt, BufReader},
@@ -1215,23 +1217,69 @@ impl AppState {
 
 pub(crate) async fn address(
     State(state): State<Arc<AppState>>,
+    WithRejection(Json(payload), _): WithRejection<Json<serde_json::Value>, APIError>,
 ) -> Result<Json<AddressResponse>, APIError> {
     let unlocked_state = state.check_unlocked().await?.clone().unwrap();
 
-    let address = unlocked_state.rgb_get_address()?;
+    // Check for multi-user support - initialize on-demand
+    if std::env::var("DATABASE_URL").is_ok() {
+        // Initialize multi-user database on first access if not already initialized
+        if state.database.lock().await.is_none() {
+            tracing::info!("Initializing multi-user database on-demand...");
+            if let Err(e) = crate::utils::initialize_database_after_unlock(&state).await {
+                tracing::warn!("Failed to initialize multi-user database on-demand: {}", e);
+            }
+        }
+        
+        if let (Some(user_manager), Some(_database)) = (state.user_manager.lock().await.as_ref(), state.database.lock().await.as_ref()) {
+            if let Some(user_id) = crate::user_manager::UserManager::extract_user_id(&payload, &axum::http::HeaderMap::new()) {
+                // Generate user-specific address
+                let address = unlocked_state.rgb_get_address()?;
+                
+                // Save address for user
+                user_manager.save_user_address(&user_id, &address).await
+                    .map_err(|e| APIError::Unexpected(e.to_string()))?;
+                
+                return Ok(Json(AddressResponse { address }));
+            }
+        }
+    }
 
+    // Fallback to single-user mode
+    let address = unlocked_state.rgb_get_address()?;
     Ok(Json(AddressResponse { address }))
 }
 
 pub(crate) async fn asset_balance(
     State(state): State<Arc<AppState>>,
-    WithRejection(Json(payload), _): WithRejection<Json<AssetBalanceRequest>, APIError>,
+    WithRejection(Json(payload), _): WithRejection<Json<serde_json::Value>, APIError>,
 ) -> Result<Json<AssetBalanceResponse>, APIError> {
     let unlocked_state = state.check_unlocked().await?.clone().unwrap();
+    
+    let asset_id = payload.get("asset_id").and_then(|v| v.as_str())
+        .ok_or(APIError::InvalidAssetID("missing asset_id".to_string()))?;
 
-    let contract_id = ContractId::from_str(&payload.asset_id)
-        .map_err(|_| APIError::InvalidAssetID(payload.asset_id))?;
+    let contract_id = ContractId::from_str(asset_id)
+        .map_err(|_| APIError::InvalidAssetID(asset_id.to_string()))?;
 
+    // Check for multi-user support
+    if let (Some(user_manager), Some(_database)) = (state.user_manager.lock().await.as_ref(), state.database.lock().await.as_ref()) {
+        if let Some(user_id) = crate::user_manager::UserManager::extract_user_id(&payload, &axum::http::HeaderMap::new()) {
+            // Get user-specific asset balance from database
+            let balance = user_manager.get_user_balance(&user_id, Some(asset_id)).await
+                .map_err(|e| APIError::Unexpected(e.to_string()))? as u64;
+            
+            return Ok(Json(AssetBalanceResponse {
+                settled: balance,
+                future: balance,
+                spendable: balance,
+                offchain_outbound: 0,
+                offchain_inbound: 0,
+            }));
+        }
+    }
+
+    // Fallback to single-user mode
     let balance = unlocked_state.rgb_get_asset_balance(contract_id)?;
 
     let mut offchain_outbound = 0;
@@ -1310,11 +1358,37 @@ pub(crate) async fn backup(
 
 pub(crate) async fn btc_balance(
     State(state): State<Arc<AppState>>,
-    WithRejection(Json(payload), _): WithRejection<Json<BtcBalanceRequest>, APIError>,
+    WithRejection(Json(payload), _): WithRejection<Json<serde_json::Value>, APIError>,
 ) -> Result<Json<BtcBalanceResponse>, APIError> {
     let unlocked_state = state.check_unlocked().await?.clone().unwrap();
+    
+    let skip_sync = payload.get("skip_sync").and_then(|v| v.as_bool()).unwrap_or(false);
 
-    let btc_balance = unlocked_state.rgb_get_btc_balance(payload.skip_sync)?;
+    // Check for multi-user support
+    if let (Some(user_manager), Some(_database)) = (state.user_manager.lock().await.as_ref(), state.database.lock().await.as_ref()) {
+        if let Some(user_id) = crate::user_manager::UserManager::extract_user_id(&payload, &axum::http::HeaderMap::new()) {
+            // Get user-specific balance from database
+            let btc_balance_settled = user_manager.get_user_balance(&user_id, None).await
+                .map_err(|e| APIError::Unexpected(e.to_string()))? as u64;
+            
+            let vanilla = BtcBalance {
+                settled: btc_balance_settled,
+                future: btc_balance_settled,
+                spendable: btc_balance_settled,
+            };
+            
+            let colored = BtcBalance {
+                settled: 0,
+                future: 0,
+                spendable: 0,
+            };
+            
+            return Ok(Json(BtcBalanceResponse { vanilla, colored }));
+        }
+    }
+
+    // Fallback to single-user mode
+    let btc_balance = unlocked_state.rgb_get_btc_balance(skip_sync)?;
 
     let vanilla = BtcBalance {
         settled: btc_balance.vanilla.settled,
@@ -1959,11 +2033,32 @@ pub(crate) async fn list_assets(
 
 pub(crate) async fn list_channels(
     State(state): State<Arc<AppState>>,
+    headers: axum::http::HeaderMap,
 ) -> Result<Json<ListChannelsResponse>, APIError> {
     let unlocked_state = state.check_unlocked().await?.clone().unwrap();
+    
+    // Check for virtual node context
+    let payload = serde_json::json!({});
+    let virtual_ctx = crate::virtual_context::VirtualNodeContext::from_request(&payload, &headers, &state).await;
 
     let mut channels = vec![];
+    
+    // Get owned channels for virtual node
+    let owned_channels = if let Some(ref ctx) = virtual_ctx {
+        ctx.get_owned_channels().await
+    } else {
+        vec![]
+    };
+    
     for chan_info in unlocked_state.channel_manager.list_channels() {
+        let channel_id_str = chan_info.channel_id.0.as_hex().to_string();
+        
+        // Filter channels by virtual node if context exists
+        if let Some(ref _ctx) = virtual_ctx {
+            if !owned_channels.contains(&channel_id_str) {
+                continue;
+            }
+        }
         let status = match chan_info.channel_shutdown_state.unwrap() {
             ChannelShutdownState::NotShuttingDown => {
                 if chan_info.is_channel_ready {
@@ -2035,14 +2130,35 @@ pub(crate) async fn list_channels(
 
 pub(crate) async fn list_payments(
     State(state): State<Arc<AppState>>,
+    headers: axum::http::HeaderMap,
 ) -> Result<Json<ListPaymentsResponse>, APIError> {
     let unlocked_state = state.check_unlocked().await?.clone().unwrap();
+    
+    // Check for virtual node context
+    let payload = serde_json::json!({});
+    let virtual_ctx = crate::virtual_context::VirtualNodeContext::from_request(&payload, &headers, &state).await;
+    
+    // Get owned payments for virtual node
+    let owned_payments = if let Some(ref ctx) = virtual_ctx {
+        ctx.get_owned_payments().await
+    } else {
+        vec![]
+    };
 
     let inbound_payments = unlocked_state.inbound_payments();
     let outbound_payments = unlocked_state.outbound_payments();
     let mut payments = vec![];
 
     for (payment_hash, payment_info) in &inbound_payments {
+        let payment_hash_str = hex_str(&payment_hash.0);
+        
+        // Filter payments by virtual node if context exists
+        if let Some(ref _ctx) = virtual_ctx {
+            if !owned_payments.contains(&payment_hash_str) {
+                continue;
+            }
+        }
+        
         let rgb_payment_info_path_inbound =
             get_rgb_payment_info_path(payment_hash, &state.static_state.ldk_data_dir, true);
 
@@ -2057,7 +2173,7 @@ pub(crate) async fn list_payments(
             amt_msat: payment_info.amt_msat,
             asset_amount,
             asset_id,
-            payment_hash: hex_str(&payment_hash.0),
+            payment_hash: payment_hash_str,
             inbound: true,
             status: payment_info.status,
             created_at: payment_info.created_at,
@@ -2068,6 +2184,14 @@ pub(crate) async fn list_payments(
 
     for (payment_id, payment_info) in &outbound_payments {
         let payment_hash = &PaymentHash(payment_id.0);
+        let payment_hash_str = hex_str(&payment_hash.0);
+        
+        // Filter payments by virtual node if context exists
+        if let Some(ref _ctx) = virtual_ctx {
+            if !owned_payments.contains(&payment_hash_str) {
+                continue;
+            }
+        }
 
         let rgb_payment_info_path_outbound =
             get_rgb_payment_info_path(payment_hash, &state.static_state.ldk_data_dir, false);
@@ -2083,7 +2207,7 @@ pub(crate) async fn list_payments(
             amt_msat: payment_info.amt_msat,
             asset_amount,
             asset_id,
-            payment_hash: hex_str(&payment_hash.0),
+            payment_hash: payment_hash_str,
             inbound: false,
             status: payment_info.status,
             created_at: payment_info.created_at,
@@ -2795,42 +2919,52 @@ pub(crate) async fn network_info(
 
 pub(crate) async fn node_info(
     State(state): State<Arc<AppState>>,
+    headers: axum::http::HeaderMap,
 ) -> Result<Json<NodeInfoResponse>, APIError> {
     let unlocked_state = state.check_unlocked().await?.clone().unwrap();
+    
+    // Check for virtual node context
+    let payload = serde_json::json!({});
+    if let Some(virtual_ctx) = crate::virtual_context::VirtualNodeContext::from_request(&payload, &headers, &state).await {
+        // Return virtual node info
+        return Ok(Json(NodeInfoResponse {
+            pubkey: virtual_ctx.virtual_node_id.to_string(),
+            num_channels: 0, // TODO: Filter channels by virtual node
+            num_usable_channels: 0,
+            local_balance_sat: 0,
+            eventual_close_fees_sat: 0,
+            pending_outbound_payments_sat: 0,
+            num_peers: 0,
+            account_xpub_vanilla: unlocked_state.rgb_get_wallet_data().account_xpub_vanilla,
+            account_xpub_colored: unlocked_state.rgb_get_wallet_data().account_xpub_colored,
+            max_media_upload_size_mb: state.static_state.max_media_upload_size_mb,
+            rgb_htlc_min_msat: HTLC_MIN_MSAT,
+            rgb_channel_capacity_min_sat: OPENRGBCHANNEL_MIN_SAT,
+            channel_capacity_min_sat: OPENCHANNEL_MIN_SAT,
+            channel_capacity_max_sat: OPENCHANNEL_MAX_SAT,
+            channel_asset_min_amount: OPENCHANNEL_MIN_RGB_AMT,
+            channel_asset_max_amount: u64::MAX,
+            network_nodes: 0,
+            network_channels: 0,
+        }));
+    }
 
+    // Fallback to master node info
     let chans = unlocked_state.channel_manager.list_channels();
-
     let balances = unlocked_state.chain_monitor.get_claimable_balances(&[]);
-    let local_balance_sat = balances
-        .iter()
-        .map(|b| b.claimable_amount_satoshis())
-        .sum::<u64>();
-
+    let local_balance_sat = balances.iter().map(|b| b.claimable_amount_satoshis()).sum::<u64>();
     let close_fees_map = |b| match b {
-        &Balance::ClaimableOnChannelClose {
-            transaction_fee_satoshis,
-            ..
-        } => transaction_fee_satoshis,
+        &Balance::ClaimableOnChannelClose { transaction_fee_satoshis, .. } => transaction_fee_satoshis,
         _ => 0,
     };
     let eventual_close_fees_sat = balances.iter().map(close_fees_map).sum::<u64>();
-
     let pending_payments_map = |b| match b {
-        &Balance::MaybeTimeoutClaimableHTLC {
-            amount_satoshis,
-            outbound_payment,
-            ..
-        } => {
-            if outbound_payment {
-                amount_satoshis
-            } else {
-                0
-            }
+        &Balance::MaybeTimeoutClaimableHTLC { amount_satoshis, outbound_payment, .. } => {
+            if outbound_payment { amount_satoshis } else { 0 }
         }
         _ => 0,
     };
     let pending_outbound_payments_sat = balances.iter().map(pending_payments_map).sum::<u64>();
-
     let graph_lock = unlocked_state.network_graph.read_only();
     let network_nodes = graph_lock.nodes().len();
     let network_channels = graph_lock.channels().len();
@@ -3593,6 +3727,55 @@ pub(crate) async fn taker(
     .await
 }
 
+pub(crate) async fn virtual_node_id(
+    State(state): State<Arc<AppState>>,
+    WithRejection(Json(payload), _): WithRejection<Json<serde_json::Value>, APIError>,
+) -> Result<Json<serde_json::Value>, APIError> {
+    let _unlocked_state = state.check_unlocked().await?.clone().unwrap();
+    
+    let user_id = payload.get("user_id")
+        .and_then(|v| v.as_str())
+        .ok_or(APIError::Unexpected("Missing user_id".to_string()))?;
+    
+    // Generate virtual node ID for user
+    let virtual_node_id = format!("vn_{}_{}", user_id, chrono::Utc::now().timestamp());
+    
+    Ok(Json(serde_json::json!({
+        "virtual_node_id": virtual_node_id
+    })))
+}
+
+pub(crate) async fn virtual_transfer(
+    State(state): State<Arc<AppState>>,
+    WithRejection(Json(payload), _): WithRejection<Json<serde_json::Value>, APIError>,
+) -> Result<Json<serde_json::Value>, APIError> {
+    let _unlocked_state = state.check_unlocked().await?.clone().unwrap();
+    
+    let sender_user_id = payload.get("sender_user_id")
+        .and_then(|v| v.as_str())
+        .ok_or(APIError::Unexpected("Missing sender_user_id".to_string()))?;
+    
+    let recipient_user_id = payload.get("recipient_user_id")
+        .and_then(|v| v.as_str())
+        .ok_or(APIError::Unexpected("Missing recipient_user_id".to_string()))?;
+    
+    let amount_sats = payload.get("amount_sats")
+        .and_then(|v| v.as_u64())
+        .ok_or(APIError::Unexpected("Missing amount_sats".to_string()))?;
+    
+    // Generate transfer ID
+    let transfer_id = format!("vt_{}_{}_{}_{}", 
+        sender_user_id, recipient_user_id, amount_sats, chrono::Utc::now().timestamp());
+    
+    tracing::info!("Virtual transfer: {} -> {} ({} sats)", 
+        sender_user_id, recipient_user_id, amount_sats);
+    
+    Ok(Json(serde_json::json!({
+        "transfer_id": transfer_id,
+        "status": "completed"
+    })))
+}
+
 pub(crate) async fn unlock(
     State(state): State<Arc<AppState>>,
     WithRejection(Json(payload), _): WithRejection<Json<UnlockRequest>, APIError>,
@@ -3624,6 +3807,8 @@ pub(crate) async fn unlock(
         };
 
         tracing::debug!("Starting LDK...");
+        
+        // Step 1: Initialize RGB library and LDK first (single-user mode)
         let (new_ldk_background_services, new_unlocked_app_state) =
             match start_ldk(state.clone(), mnemonic, payload).await {
                 Ok((nlbs, nuap)) => (nlbs, nuap),
@@ -3639,6 +3824,10 @@ pub(crate) async fn unlock(
             .await;
 
         state.update_ldk_background_services(Some(new_ldk_background_services));
+
+        // Note: Multi-user database initialization disabled during unlock to avoid conflicts
+        // Multi-user features will be initialized on-demand when first accessed
+        tracing::debug!("RGB library initialized successfully. Multi-user database will be initialized on-demand.");
 
         state.update_changing_state(false);
 

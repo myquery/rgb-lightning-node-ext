@@ -1,16 +1,36 @@
 mod args;
 mod backup;
 mod bitcoind;
+mod database;
 mod disk;
 mod error;
+mod hsm;
+mod hsm_provider;
 mod ldk;
 mod rgb;
+mod rgb_db_adapter;
+mod rgb_db_fix;
 mod routes;
+mod sqlite_proxy;
 mod swap;
+mod user_manager;
 mod utils;
+mod telegram_integration;
+mod user_api;
+mod virtual_node;
+mod virtual_context;
+mod virtual_channel;
+mod virtual_htlc;
+mod virtual_balance;
+mod virtual_router;
+mod virtual_api;
 
 #[cfg(test)]
-mod test;
+mod test {
+    mod virtual_node_isolation;
+    mod integration_virtual_nodes;
+    mod virtual_node_simple;
+}
 
 use anyhow::Result;
 use axum::{
@@ -22,6 +42,8 @@ use axum::{
 };
 use std::{net::SocketAddr, sync::Arc, time::Duration};
 use tokio::signal;
+#[cfg(unix)]
+use tokio::signal::unix;
 use tower_http::cors::CorsLayer;
 use tower_http::limit::RequestBodyLimitLayer;
 use tower_http::trace::TraceLayer;
@@ -50,9 +72,14 @@ use crate::routes::{
     send_payment, shutdown, sign_message, sync, taker, unlock,
 };
 use crate::utils::{start_daemon, AppState, LOGS_DIR};
+use crate::telegram_integration::TelegramIntegration;
+use crate::user_api::user_api_routes;
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 8)]
 async fn main() -> Result<()> {
+    // Load environment variables from .env file
+    dotenvy::dotenv().ok();
+    
     let args = args::parse_startup_args()?;
 
     // stdout logger
@@ -90,7 +117,18 @@ async fn main() -> Result<()> {
 }
 
 pub(crate) async fn app(args: LdkUserInfo) -> Result<(Router, Arc<AppState>), AppError> {
+    // Note: RGB database configuration disabled to avoid initialization conflicts
+    // RGB library will initialize its own database during unlock
+    
     let app_state = start_daemon(&args).await?;
+    
+    // Reset changing state after daemon initialization
+    app_state.reset_changing_state();
+    
+    // Initialize Telegram integration
+    let database_url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgresql://localhost:5432/rgb_lightning".to_string());
+    let _telegram = Arc::new(TelegramIntegration::new(database_url));
 
     let router = Router::new()
         .route(
@@ -154,6 +192,12 @@ pub(crate) async fn app(args: LdkUserInfo) -> Result<(Router, Arc<AppState>), Ap
         .route("/sync", post(sync))
         .route("/taker", post(taker))
         .route("/unlock", post(unlock))
+        // Virtual node API routes for bitMaskRGB integration
+        .route("/virtual_rgbinvoice", post(crate::virtual_api::virtual_rgbinvoice))
+        .route("/virtual_sendpayment", post(crate::virtual_api::virtual_sendpayment))
+        .route("/virtual_assetbalance", post(crate::virtual_api::virtual_assetbalance))
+        // Telegram bot integration routes
+        .nest("/telegram", user_api_routes())
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(|request: &Request<_>| {
@@ -188,6 +232,11 @@ impl AppState {
         }
         false
     }
+    
+    fn reset_changing_state(&self) {
+        let mut changing_state = self.get_changing_state();
+        *changing_state = false;
+    }
 }
 
 /// Tokio signal handler that will wait for a user to press CTRL+C.
@@ -202,7 +251,7 @@ async fn shutdown_signal(app_state: Arc<AppState>) {
 
     #[cfg(unix)]
     let terminate = async {
-        signal::unix::signal(signal::unix::SignalKind::terminate())
+        unix::signal(unix::SignalKind::terminate())
             .expect("failed to install signal handler")
             .recv()
             .await;

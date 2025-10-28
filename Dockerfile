@@ -1,45 +1,25 @@
-FROM rust:1.87.0-bookworm AS builder
+FROM rust:1.70-slim
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    cmake \
+# Install dependencies
+RUN apt-get update && apt-get install -y \
     git \
+    pkg-config \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Create a new empty shell project
-RUN USER=root cargo new --bin app
 WORKDIR /app
 
-# Copy the Git submodule first
-COPY rust-lightning rust-lightning/
-
-# Copy manifests
-COPY ./Cargo.lock ./Cargo.lock
-COPY ./Cargo.toml ./Cargo.toml
-
-# Cache dependencies
-RUN cargo fetch
-
-# Build only dependencies to cache them
-RUN cargo build --release --locked
-RUN rm src/*.rs
-
 # Copy source code
-COPY ./src ./src
+COPY . .
 
-# Set environment variables for optimal compilation
-ENV RUSTFLAGS="-C target-cpu=native"
-ENV CARGO_BUILD_JOBS="8"
+# Build the application
+RUN cargo build --release
 
-# Build application
-RUN cargo build --release --locked
+# Create data directory
+RUN mkdir -p /app/data
 
-FROM debian:bookworm-slim
+# Expose ports
+EXPOSE 3001 9735
 
-COPY --from=builder /app/target/release/rgb-lightning-node /usr/bin/rgb-lightning-node
-
-RUN apt-get update && apt install -y --no-install-recommends \
-    ca-certificates openssl \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-ENTRYPOINT ["/usr/bin/rgb-lightning-node"]
+# Start the node
+CMD ["./target/release/rgb-lightning-node", "/app/data", "--daemon-listening-port", "3001", "--ldk-peer-listening-port", "9735", "--network", "testnet"]
