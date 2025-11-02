@@ -42,64 +42,87 @@ warning: unused import: `crate::virtual_router::VirtualRouter`
 6 | use crate::virtual_router::VirtualRouter;
   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-warning: unused import: `bitcoin::secp256k1::PublicKey`
- --> src/virtual_channel.rs:2:5
-  |
-2 | use bitcoin::secp256k1::PublicKey;
-  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-warning: unused import: `lightning::ln::types::ChannelId`
- --> src/virtual_channel.rs:3:5
-  |
-3 | use lightning::ln::types::ChannelId;
-  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-warning: unused import: `std::collections::HashMap`
- --> src/virtual_channel.rs:4:5
-  |
-4 | use std::collections::HashMap;
-  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
-
 warning: unused import: `lightning::routing::router::Route`
  --> src/virtual_router.rs:4:5
   |
 4 | use lightning::routing::router::Route;
   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-warning: unused variable: `user_id`
-  --> src/hsm_provider.rs:64:44
+warning: unused imports: `payment_webhook` and `virtual_transfer`
+  --> src/main.rs:76:64
    |
-64 |     async fn derive_virtual_node_id(&self, user_id: &str) -> Result<PublicKey, HsmError> {
-   |                                            ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_user_id`
-   |
-   = note: `#[warn(unused_variables)]` on by default
+76 |     send_payment, shutdown, sign_message, sync, taker, unlock, virtual_transfer, payment_webhook,
+   |                                                                ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^
 
-warning: unused variable: `user_id`
-  --> src/hsm_provider.rs:70:46
-   |
-70 |     async fn get_virtual_keys_manager(&self, user_id: &str) -> Result<VirtualKeysManager, HsmError> {
-   |                                              ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_user_id`
+warning: unused variable: `database`
+    --> src/routes.rs:1235:42
+     |
+1235 |         if let (Some(user_manager), Some(database)) = (state.user_manager.lock().await.as_ref(), state.database.lock().await.as_ref()) {
+     |                                          ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_database`
+     |
+     = note: `#[warn(unused_variables)]` on by default
 
-warning: unused variable: `user_id`
-  --> src/hsm_provider.rs:89:44
-   |
-89 |     async fn derive_virtual_node_id(&self, user_id: &str) -> Result<PublicKey, HsmError> {
-   |                                            ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_user_id`
+warning: unused variable: `database`
+    --> src/routes.rs:1267:38
+     |
+1267 |     if let (Some(user_manager), Some(database)) = (state.user_manager.lock().await.as_ref(), state.database.lock().await.as_ref()) {
+     |                                      ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_database`
 
-warning: unused variable: `user_id`
-  --> src/hsm_provider.rs:95:46
-   |
-95 |     async fn get_virtual_keys_manager(&self, user_id: &str) -> Result<VirtualKeysManager, HsmError> {
-   |                                              ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_user_id`
+warning: unused variable: `database`
+    --> src/routes.rs:1378:38
+     |
+1378 |     if let (Some(user_manager), Some(database)) = (state.user_manager.lock().await.as_ref(), state.database.lock().await.as_ref()) {
+     |                                      ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_database`
 
-warning: struct `UserWallet` is never constructed
-  --> src/database.rs:12:12
+warning: unused variable: `transaction_id`
+   --> src/virtual_balance.rs:194:13
+    |
+194 |         let transaction_id = format!("btc_{}_{}_{}_{}", from_user_id, to_user_id, amount_sats, chrono::Utc::now().timestamp());
+    |             ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_transaction_id`
+
+warning: methods `get_address_balance`, `get_multi_address_balance`, and `get_user_balance_by_id` are never used
+  --> src/blockchain_balance.rs:21:18
+   |
+15 | impl BlockchainBalanceService {
+   | ----------------------------- methods in this implementation
+...
+21 |     pub async fn get_address_balance(&self, address: &str) -> Result<i64, AppError> {
+   |                  ^^^^^^^^^^^^^^^^^^^
+...
+80 |     pub async fn get_multi_address_balance(&self, addresses: &[String]) -> Result<i64, AppError> {
+   |                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+97 |     pub async fn get_user_balance_by_id(&self, database: &crate::database::Database, user_id: &str) -> Result<i64, AppError> {
+   |                  ^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: field `confirmations` is never read
+   --> src/blockchain_balance.rs:141:9
+    |
+137 | pub struct UtxoInfo {
+    |            -------- field in this struct
+...
+141 |     pub confirmations: Option<u32>,
+    |         ^^^^^^^^^^^^^
+    |
+    = note: `UtxoInfo` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `user_id`, `mnemonic_encrypted`, `derivation_path`, and `created_at` are never read
+  --> src/database.rs:13:9
    |
 12 | pub struct UserWallet {
-   |            ^^^^^^^^^^
+   |            ---------- fields in this struct
+13 |     pub user_id: String,
+   |         ^^^^^^^
+14 |     pub mnemonic_encrypted: String,
+   |         ^^^^^^^^^^^^^^^^^^
+15 |     pub derivation_path: String,
+   |         ^^^^^^^^^^^^^^^
+16 |     pub created_at: chrono::DateTime<chrono::Utc>,
+   |         ^^^^^^^^^^
    |
    = note: `UserWallet` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-   = note: `#[warn(dead_code)]` on by default
 
 warning: struct `UserTransaction` is never constructed
   --> src/database.rs:20:12
@@ -117,17 +140,11 @@ warning: struct `UserChannel` is never constructed
    |
    = note: `UserChannel` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
 
-warning: multiple methods are never used
-   --> src/database.rs:61:18
+warning: methods `save_user_transaction`, `get_user_transactions`, `save_user_channel`, `get_user_channels`, and `execute_internal_transfer` are never used
+   --> src/database.rs:88:18
     |
 40  | impl Database {
     | ------------- methods in this implementation
-...
-61  |     pub async fn create_user_wallet(&self, user_id: &str, mnemonic_encrypted: &str, derivation_path: &str) -> Result<()> {
-    |                  ^^^^^^^^^^^^^^^^^^
-...
-71  |     pub async fn get_user_wallet(&self, user_id: &str) -> Result<Option<UserWallet>> {
-    |                  ^^^^^^^^^^^^^^^
 ...
 88  |     pub async fn save_user_transaction(&self, user_id: &str, txid: &str, amount: i64, asset_id: Option<&str>, status: &str) -> Result<Uui...
     |                  ^^^^^^^^^^^^^^^^^^^^^
@@ -141,14 +158,25 @@ warning: multiple methods are never used
 130 |     pub async fn get_user_channels(&self, user_id: &str) -> Result<Vec<UserChannel>> {
     |                  ^^^^^^^^^^^^^^^^^
 ...
-149 |     pub async fn update_user_balance(&self, user_id: &str, asset_id: Option<&str>, balance: i64) -> Result<()> {
-    |                  ^^^^^^^^^^^^^^^^^^^
+232 |     pub async fn execute_internal_transfer(
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: variants `InvalidRequest`, `InsufficientBalance`, and `UserNotFound` are never constructed
+   --> src/error.rs:513:5
+    |
+505 | pub enum AppError {
+    |          -------- variants in this enum
 ...
-171 |     pub async fn get_user_balances(&self, user_id: &str) -> Result<HashMap<String, i64>> {
-    |                  ^^^^^^^^^^^^^^^^^
-...
-198 |     pub async fn get_user_addresses(&self, user_id: &str) -> Result<Vec<String>> {
-    |                  ^^^^^^^^^^^^^^^^^^
+513 |     InvalidRequest(String),
+    |     ^^^^^^^^^^^^^^
+514 |     #[error("Insufficient balance")]
+515 |     InsufficientBalance,
+    |     ^^^^^^^^^^^^^^^^^^^
+516 |     #[error("User not found")]
+517 |     UserNotFound,
+    |     ^^^^^^^^^^^^
+    |
+    = note: `AppError` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
 
 warning: fields `master_keys` and `user_id` are never read
   --> src/hsm.rs:53:5
@@ -177,15 +205,6 @@ warning: methods `get_virtual_node_secret`, `get_user_id`, and `derive_channel_k
 ...
 84 |     pub fn derive_channel_keys(&self, channel_value_satoshis: u64, params: &[u8; 32]) -> SecretKey {
    |            ^^^^^^^^^^^^^^^^^^^
-
-warning: method `derive_virtual_node_id` is never used
-  --> src/hsm_provider.rs:10:14
-   |
-8  | pub trait HsmProvider: Send + Sync {
-   |           ----------- method in this trait
-9  |     /// Derive virtual node ID for a user
-10 |     async fn derive_virtual_node_id(&self, user_id: &str) -> Result<PublicKey, HsmError>;
-   |              ^^^^^^^^^^^^^^^^^^^^^^
 
 warning: variants `KeyDerivation` and `InvalidUserId` are never constructed
   --> src/hsm_provider.rs:19:5
@@ -283,16 +302,10 @@ warning: function `wait_for_rgb_ready` is never used
    |              ^^^^^^^^^^^^^^^^^^
 
 warning: function `virtual_node_id` is never used
-    --> src/routes.rs:3730:21
+    --> src/routes.rs:3807:21
      |
-3730 | pub(crate) async fn virtual_node_id(
+3807 | pub(crate) async fn virtual_node_id(
      |                     ^^^^^^^^^^^^^^^
-
-warning: function `virtual_transfer` is never used
-    --> src/routes.rs:3748:21
-     |
-3748 | pub(crate) async fn virtual_transfer(
-     |                     ^^^^^^^^^^^^^^^^
 
 warning: struct `SqliteProxy` is never constructed
  --> src/sqlite_proxy.rs:7:12
@@ -312,36 +325,30 @@ warning: associated items `new` and `setup_sqlite_redirect` are never used
    |            ^^^^^^^^^^^^^^^^^^^^^
 
 warning: function `redirect_rgb_database_to_memory` is never used
-  --> src/sqlite_proxy.rs:36:8
+  --> src/sqlite_proxy.rs:37:8
    |
-36 | pub fn redirect_rgb_database_to_memory() -> Result<(), Box<dyn std::error::Error>> {
+37 | pub fn redirect_rgb_database_to_memory() -> Result<(), Box<dyn std::error::Error>> {
    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-warning: multiple methods are never used
-   --> src/user_manager.rs:40:18
+warning: methods `update_user_balance`, `save_user_transaction`, `get_user_transactions`, `save_user_channel`, and `get_user_channels` are never used
+   --> src/user_manager.rs:89:18
     |
-19  | impl UserManager {
+22  | impl UserManager {
     | ---------------- methods in this implementation
 ...
-40  |     pub async fn get_user_context(&self, user_id: &str) -> Result<UserContext, AppError> {
-    |                  ^^^^^^^^^^^^^^^^
-...
-60  |     async fn create_user_wallet(&self, user_id: &str) -> Result<(), AppError> {
-    |              ^^^^^^^^^^^^^^^^^^
-...
-76  |     pub async fn update_user_balance(&self, user_id: &str, asset_id: Option<&str>, amount: i64) -> Result<(), AppError> {
+89  |     pub async fn update_user_balance(&self, user_id: &str, asset_id: Option<&str>, amount: i64) -> Result<(), AppError> {
     |                  ^^^^^^^^^^^^^^^^^^^
 ...
-89  |     pub async fn save_user_transaction(&self, user_id: &str, txid: &str, amount: i64, asset_id: Option<&str>, status: &str) -> Result<(),...
+198 |     pub async fn save_user_transaction(&self, user_id: &str, txid: &str, amount: i64, asset_id: Option<&str>, status: &str) -> Result<(),...
     |                  ^^^^^^^^^^^^^^^^^^^^^
 ...
-103 |     pub async fn get_user_transactions(&self, user_id: &str) -> Result<Vec<crate::database::UserTransaction>, AppError> {
+212 |     pub async fn get_user_transactions(&self, user_id: &str) -> Result<Vec<crate::database::UserTransaction>, AppError> {
     |                  ^^^^^^^^^^^^^^^^^^^^^
 ...
-109 |     pub async fn save_user_channel(&self, user_id: &str, channel_id: &str, peer_pubkey: &str, capacity_sats: i64, status: &str) -> Result...
+218 |     pub async fn save_user_channel(&self, user_id: &str, channel_id: &str, peer_pubkey: &str, capacity_sats: i64, status: &str) -> Result...
     |                  ^^^^^^^^^^^^^^^^^
 ...
-116 |     pub async fn get_user_channels(&self, user_id: &str) -> Result<Vec<crate::database::UserChannel>, AppError> {
+225 |     pub async fn get_user_channels(&self, user_id: &str) -> Result<Vec<crate::database::UserChannel>, AppError> {
     |                  ^^^^^^^^^^^^^^^^^
 
 warning: fields `users` and `database_url` are never read
@@ -406,18 +413,18 @@ warning: method `owns_channel` is never used
    |                  ^^^^^^^^^^^^
 
 warning: methods `map_channel_to_virtual_node`, `get_virtual_node_for_channel`, and `map_payment_to_virtual_node` are never used
-  --> src/virtual_channel.rs:18:18
+  --> src/virtual_channel.rs:16:18
    |
-12 | impl VirtualChannelManager {
+10 | impl VirtualChannelManager {
    | -------------------------- methods in this implementation
 ...
-18 |     pub async fn map_channel_to_virtual_node(&self, channel_id: &str, virtual_node_id: &str, user_id: i64) -> Result<(), sqlx::Error> {
+16 |     pub async fn map_channel_to_virtual_node(&self, channel_id: &str, virtual_node_id: &str, user_id: i64) -> Result<(), sqlx::Error> {
    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ...
-41 |     pub async fn get_virtual_node_for_channel(&self, channel_id: &str) -> Result<Option<String>, sqlx::Error> {
+40 |     pub async fn get_virtual_node_for_channel(&self, channel_id: &str) -> Result<Option<String>, sqlx::Error> {
    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ...
-53 |     pub async fn map_payment_to_virtual_node(&self, payment_hash: &str, virtual_node_id: &str, user_id: i64, inbound: bool) -> Result<(),...
+52 |     pub async fn map_payment_to_virtual_node(&self, payment_hash: &str, _virtual_node_id: &str, user_id: i64, inbound: bool) -> Result<()...
    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 warning: struct `VirtualHtlc` is never constructed
@@ -519,54 +526,59 @@ warning: methods `has_rgb_transfer`, `rgb_contract_id`, and `rgb_amount` are nev
 197 |     pub fn rgb_amount(&self) -> Option<u64> {
     |            ^^^^^^^^^^
 
-warning: struct `VirtualBalanceManager` is never constructed
- --> src/virtual_balance.rs:9:12
-  |
-9 | pub struct VirtualBalanceManager {
-  |            ^^^^^^^^^^^^^^^^^^^^^
+warning: fields `btc_balances` and `rgb_balances` are never read
+  --> src/virtual_balance.rs:12:5
+   |
+11 | pub struct VirtualBalanceManager {
+   |            --------------------- fields in this struct
+12 |     btc_balances: Arc<RwLock<HashMap<PublicKey, u64>>>,
+   |     ^^^^^^^^^^^^
+13 |     rgb_balances: Arc<RwLock<HashMap<(PublicKey, ContractId), u64>>>,
+   |     ^^^^^^^^^^^^
 
-warning: multiple associated items are never used
-   --> src/virtual_balance.rs:16:12
+warning: methods `apply_settlement`, `update_btc_balance`, `update_rgb_balance`, `get_btc_balance`, `get_rgb_balance`, and `check_sufficient_balance` are never used
+   --> src/virtual_balance.rs:27:18
     |
-15  | impl VirtualBalanceManager {
-    | -------------------------- associated items in this implementation
-16  |     pub fn new(database: Arc<crate::database::Database>) -> Self {
-    |            ^^^
+17  | impl VirtualBalanceManager {
+    | -------------------------- methods in this implementation
 ...
-25  |     pub async fn apply_settlement(&self, settlement: &VirtualSettlement) -> Result<(), BalanceError> {
+27  |     pub async fn apply_settlement(&self, settlement: &VirtualSettlement) -> Result<(), BalanceError> {
     |                  ^^^^^^^^^^^^^^^^
 ...
-62  |     async fn update_btc_balance(&self, virtual_node: &PublicKey, delta: i64) -> Result<(), BalanceError> {
+64  |     async fn update_btc_balance(&self, virtual_node: &PublicKey, delta: i64) -> Result<(), BalanceError> {
     |              ^^^^^^^^^^^^^^^^^^
 ...
-79  |     async fn update_rgb_balance(
+81  |     async fn update_rgb_balance(
     |              ^^^^^^^^^^^^^^^^^^
 ...
-103 |     pub async fn get_btc_balance(&self, virtual_node: &PublicKey) -> u64 {
+105 |     pub async fn get_btc_balance(&self, virtual_node: &PublicKey) -> u64 {
     |                  ^^^^^^^^^^^^^^^
 ...
-109 |     pub async fn get_rgb_balance(&self, virtual_node: &PublicKey, contract_id: ContractId) -> u64 {
+111 |     pub async fn get_rgb_balance(&self, virtual_node: &PublicKey, contract_id: ContractId) -> u64 {
     |                  ^^^^^^^^^^^^^^^
 ...
-116 |     pub async fn check_sufficient_balance(
+118 |     pub async fn check_sufficient_balance(
     |                  ^^^^^^^^^^^^^^^^^^^^^^^^
 
-warning: variants `InsufficientBtc`, `InsufficientRgb`, and `Database` are never constructed
-   --> src/virtual_balance.rs:150:5
+warning: variant `InsufficientRgb` is never constructed
+   --> src/virtual_balance.rs:256:5
     |
-148 | pub enum BalanceError {
-    |          ------------ variants in this enum
-149 |     #[error("Insufficient BTC balance: required {required}, available {available}")]
-150 |     InsufficientBtc { required: u64, available: u64 },
-    |     ^^^^^^^^^^^^^^^
-151 |     #[error("Insufficient RGB balance for {contract_id}: required {required}, available {available}")]
-152 |     InsufficientRgb {
-    |     ^^^^^^^^^^^^^^^
+252 | pub enum BalanceError {
+    |          ------------ variant in this enum
 ...
-158 |     Database(String),
-    |     ^^^^^^^^
+256 |     InsufficientRgb {
+    |     ^^^^^^^^^^^^^^^
     |
     = note: `BalanceError` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: method `get_actual_user_balance` is never used
+   --> src/virtual_balance.rs:267:14
+    |
+265 | impl VirtualBalanceManager {
+    | -------------------------- method in this implementation
+266 |     /// Get user's actual BTC balance from their real UTXOs (represents real spendable funds)
+267 |     async fn get_actual_user_balance(
+    |              ^^^^^^^^^^^^^^^^^^^^^^^
 
 warning: struct `VirtualRouter` is never constructed
   --> src/virtual_router.rs:13:12
@@ -641,261 +653,174 @@ warning: variants `InsufficientBalance`, `HtlcCreation`, `Settlement`, `BalanceU
     |
     = note: `VirtualRouterError` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
 
-warning: field `asset_id` is never read
-  --> src/virtual_api.rs:39:9
+warning: methods `create_lightning_invoice` and `get_new_address` are never used
+  --> src/lightning_router.rs:58:18
    |
-38 | pub struct VirtualAssetBalanceRequest {
-   |            -------------------------- field in this struct
-39 |     pub asset_id: String,
-   |         ^^^^^^^^
+23 | impl LightningRouter {
+   | -------------------- methods in this implementation
+...
+58 |     pub async fn create_lightning_invoice(
+   |                  ^^^^^^^^^^^^^^^^^^^^^^^^
+...
+84 |     pub async fn get_new_address(&self) -> Result<String, AppError> {
+   |                  ^^^^^^^^^^^^^^^
 
-warning: `rgb-lightning-node` (bin "rgb-lightning-node") generated 63 warnings (run `cargo fix --bin "rgb-lightning-node"` to apply 11 suggestions)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.40s
+warning: method `create_user_invoice` is never used
+  --> src/inbound_payment_handler.rs:34:18
+   |
+28 | impl InboundPaymentHandler {
+   | -------------------------- method in this implementation
+...
+34 |     pub async fn create_user_invoice(
+   |                  ^^^^^^^^^^^^^^^^^^^
+
+warning: `rgb-lightning-node` (bin "rgb-lightning-node") generated 64 warnings (run `cargo fix --bin "rgb-lightning-node"` to apply 9 suggestions)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.33s
      Running `target/debug/rgb-lightning-node /home/oem/.lighening-node-storage-testnet --daemon-listening-port 3001 --network testnet`
-[2m2025-10-26T13:30:06.025720Z[0m [32m INFO[0m [2mrgb_lightning_node::utils[0m[2m:[0m DATABASE_URL found - multi-user support will be enabled after unlock
-[2m2025-10-26T13:30:06.027422Z[0m [32m INFO[0m [2mrgb_lightning_node[0m[2m:[0m Listening on 0.0.0.0:3001
-[2m2025-10-26T13:30:07.568652Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/networkinfo [3mrequest_id[0m[2m=[0mf6986f91-1f45-4b8f-80e7-e98f21986c89[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:30:07.569214Z[0m [31mERROR[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/networkinfo [3mrequest_id[0m[2m=[0mf6986f91-1f45-4b8f-80e7-e98f21986c89[1m}[0m[2m:[0m [2mrgb_lightning_node::error[0m[2m:[0m APIError: Node is locked (hint: call unlock)
-[2m2025-10-26T13:30:07.569920Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/networkinfo [3mrequest_id[0m[2m=[0mf6986f91-1f45-4b8f-80e7-e98f21986c89 [3mstatus_code[0m[2m=[0m403 Forbidden[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 1.528108ms
-[2m2025-10-26T13:30:07.579672Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/init [3mrequest_id[0m[2m=[0mc833b104-37a2-49c1-954e-19605f31454e[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:30:07.580202Z[0m [31mERROR[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/init [3mrequest_id[0m[2m=[0mc833b104-37a2-49c1-954e-19605f31454e[1m}[0m[2m:[0m [2mrgb_lightning_node::error[0m[2m:[0m APIError: Node has already been initialized
-[2m2025-10-26T13:30:07.580389Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/init [3mrequest_id[0m[2m=[0mc833b104-37a2-49c1-954e-19605f31454e [3mstatus_code[0m[2m=[0m403 Forbidden[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 813.85µs
-[2m2025-10-26T13:30:12.592878Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/unlock [3mrequest_id[0m[2m=[0m150a0fe4-9665-47f8-b821-fc8ee6a7f38c[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:30:12.593188Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/unlock [3mrequest_id[0m[2m=[0m150a0fe4-9665-47f8-b821-fc8ee6a7f38c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Unlock started
-[2m2025-10-26T13:30:13.610704Z[0m [32m INFO[0m [2melectrum_client::raw_client[0m[2m:[0m Trying to connect to 34.154.172.18:50013 (attempt 1/1) with timeout 10s    
-[2m2025-10-26T13:30:15.211940Z[0m [32m INFO[0m [2mrgb_lightning_node::ldk[0m[2m:[0m Connected to an indexer with the Electrum protocol
-[2m2025-10-26T13:30:16.471132Z[0m [32m INFO[0m [2mrgb_lightning_node::ldk[0m[2m:[0m Using a custom proxy
-[2m2025-10-26T13:30:17.052956Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m40.782µs [3melapsed_secs[0m[2m=[0m4.0782e-5
-[2m2025-10-26T13:30:17.054081Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"CREATE TABLE IF NOT …" [3mdb.statement[0m[2m=[0m"\n\nCREATE TABLE IF NOT EXISTS \"seaql_migrations\" ( \"version\" varchar NOT NULL PRIMARY KEY, \"applied_at\" bigint NOT NULL )\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m720.437µs [3melapsed_secs[0m[2m=[0m0.000720437
-[2m2025-10-26T13:30:17.054202Z[0m [32m INFO[0m [2msea_orm_migration::migrator[0m[2m:[0m Applying all pending migrations
-[2m2025-10-26T13:30:17.054390Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"CREATE TABLE IF NOT …" [3mdb.statement[0m[2m=[0m"\n\nCREATE TABLE IF NOT EXISTS \"seaql_migrations\" ( \"version\" varchar NOT NULL PRIMARY KEY, \"applied_at\" bigint NOT NULL )\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m26.929µs [3melapsed_secs[0m[2m=[0m2.6929e-5
-[2m2025-10-26T13:30:17.054764Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m23.087µs [3melapsed_secs[0m[2m=[0m2.3087e-5
-[2m2025-10-26T13:30:17.055207Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"CREATE TABLE IF NOT …" [3mdb.statement[0m[2m=[0m"\n\nCREATE TABLE IF NOT EXISTS \"seaql_migrations\" ( \"version\" varchar NOT NULL PRIMARY KEY, \"applied_at\" bigint NOT NULL )\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m311.933µs [3melapsed_secs[0m[2m=[0m0.000311933
-[2m2025-10-26T13:30:17.055423Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"CREATE TABLE IF NOT …" [3mdb.statement[0m[2m=[0m"\n\nCREATE TABLE IF NOT EXISTS \"seaql_migrations\" ( \"version\" varchar NOT NULL PRIMARY KEY, \"applied_at\" bigint NOT NULL )\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m21.66µs [3melapsed_secs[0m[2m=[0m2.166e-5
-[2m2025-10-26T13:30:17.055761Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"version\", \"applied_at\" FROM …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"version\", \"applied_at\" FROM \"seaql_migrations\" ORDER BY \"version\" ASC\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m115.813µs [3melapsed_secs[0m[2m=[0m0.000115813
-[2m2025-10-26T13:30:17.055903Z[0m [32m INFO[0m [2msea_orm_migration::migrator[0m[2m:[0m No pending migrations
-[2m2025-10-26T13:30:17.064192Z[0m [32m INFO[0m [2melectrum_client::raw_client[0m[2m:[0m Trying to connect to 34.154.172.18:50013 (attempt 1/1) with timeout 10s    
-[2m2025-10-26T13:30:18.849563Z[0m [32m INFO[0m [2melectrum::raw_client[0m[2m:[0m Trying to connect to 34.154.172.18:50013 (attempt 1/1) with timeout 10s    
-[2m2025-10-26T13:30:21.880407Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"txo\".\"idx\", \"txo\".\"txid\", \"txo\".\"vout\", …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"txo\".\"idx\", \"txo\".\"txid\", \"txo\".\"vout\", \"txo\".\"btc_amount\", \"txo\".\"spent\", \"txo\".\"exists\", \"txo\".\"pending_witness\" FROM \"txo\"\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m147.685µs [3melapsed_secs[0m[2m=[0m0.000147685
-[2m2025-10-26T13:30:21.882041Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"pending_witness_script\".\"idx\", \"pending_witness_script\".\"script\" FROM …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"pending_witness_script\".\"idx\", \"pending_witness_script\".\"script\" FROM \"pending_witness_script\"\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m1.237458ms [3melapsed_secs[0m[2m=[0m0.001237458
-[2m2025-10-26T13:30:21.882414Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"txo\".\"idx\", \"txo\".\"txid\", \"txo\".\"vout\", …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"txo\".\"idx\", \"txo\".\"txid\", \"txo\".\"vout\", \"txo\".\"btc_amount\", \"txo\".\"spent\", \"txo\".\"exists\", \"txo\".\"pending_witness\" FROM \"txo\"\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m28.831µs [3melapsed_secs[0m[2m=[0m2.8831e-5
-[2m2025-10-26T13:30:21.882893Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"asset\".\"idx\", \"asset\".\"media_idx\", \"asset\".\"id\", …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"asset\".\"idx\", \"asset\".\"media_idx\", \"asset\".\"id\", \"asset\".\"schema\", \"asset\".\"added_at\", \"asset\".\"details\", \"asset\".\"issued_supply\", \"asset\".\"name\", \"asset\".\"precision\", \"asset\".\"ticker\", \"asset\".\"timestamp\" FROM \"asset\"\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m124.541µs [3melapsed_secs[0m[2m=[0m0.000124541
-[2m2025-10-26T13:30:21.883365Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m37.37µs [3melapsed_secs[0m[2m=[0m3.737e-5
-[2m2025-10-26T13:30:21.883920Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"media\".\"idx\", \"media\".\"digest\", \"media\".\"mime\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"media\".\"idx\", \"media\".\"digest\", \"media\".\"mime\" FROM \"media\"\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m382.029µs [3melapsed_secs[0m[2m=[0m0.000382029
-[2m2025-10-26T13:30:22.619637Z[0m [32m INFO[0m [2mrgb_lightning_node::ldk[0m[2m:[0m LDK logs are available at <your-supplied-ldk-data-dir-path>/.ldk/logs
-[2m2025-10-26T13:30:22.619732Z[0m [32m INFO[0m [2mrgb_lightning_node::ldk[0m[2m:[0m Local Node ID is 02945cf9ea4a7c952c501d12de2d7f11c2ad0a81276f29c766d04bb8d281ab4ead
-[2m2025-10-26T13:30:22.619845Z[0m [32m INFO[0m [2mrgb_lightning_node::routes[0m[2m:[0m Unlock completed
-[2m2025-10-26T13:30:22.620029Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/unlock [3mrequest_id[0m[2m=[0m150a0fe4-9665-47f8-b821-fc8ee6a7f38c [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 10.027210629s
-[2m2025-10-26T13:30:32.629491Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/nodeinfo [3mrequest_id[0m[2m=[0m1e413a29-870a-462c-9051-4d58e954294d[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:30:32.629877Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/nodeinfo [3mrequest_id[0m[2m=[0m1e413a29-870a-462c-9051-4d58e954294d [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 465.852µs
-[2m2025-10-26T13:35:03.857394Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0m5d61294e-b406-4bc2-8378-67e31ec12c20[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:35:03.857570Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0m5d61294e-b406-4bc2-8378-67e31ec12c20 [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 269.06µs
-[2m2025-10-26T13:35:03.860771Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0m3c95196d-f40a-431f-9e57-8399324b5fbc[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:35:03.860918Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0m3c95196d-f40a-431f-9e57-8399324b5fbc [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 188.119µs
-[2m2025-10-26T13:35:03.947258Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_transfer [3mrequest_id[0m[2m=[0m261f99ab-5201-43c9-a477-2dc57b77920e[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:35:03.947412Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_transfer [3mrequest_id[0m[2m=[0m261f99ab-5201-43c9-a477-2dc57b77920e [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 202.276µs
-[2m2025-10-26T13:40:13.958834Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0m24f2d490-d3e0-4807-8929-062af496c40c[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:40:13.959024Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0m24f2d490-d3e0-4807-8929-062af496c40c [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 234.534µs
-[2m2025-10-26T13:40:13.963588Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0m7f0961e9-331b-4f05-9df1-56d76b94b5b2[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:40:13.963743Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0m7f0961e9-331b-4f05-9df1-56d76b94b5b2 [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 210.423µs
-[2m2025-10-26T13:40:14.056769Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_transfer [3mrequest_id[0m[2m=[0mcd23caf4-0256-4e36-9189-2d00d7662493[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:40:14.056918Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_transfer [3mrequest_id[0m[2m=[0mcd23caf4-0256-4e36-9189-2d00d7662493 [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 199.842µs
-[2m2025-10-26T13:40:17.057744Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m164.736µs [3melapsed_secs[0m[2m=[0m0.000164736
-[2m2025-10-26T13:40:32.241073Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0m15d0f3f1-7baf-4c80-bd4b-1303a533cb84[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:40:32.241225Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0m15d0f3f1-7baf-4c80-bd4b-1303a533cb84 [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 201.031µs
-[2m2025-10-26T13:40:32.244080Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0m7fa7aa73-5133-4962-ad00-81d08da06f45[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:40:32.244204Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0m7fa7aa73-5133-4962-ad00-81d08da06f45 [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 163.642µs
-[2m2025-10-26T13:40:32.330134Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_transfer [3mrequest_id[0m[2m=[0mb3848664-0c84-48d2-a272-bae8cd8bbd8d[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:40:32.330281Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_transfer [3mrequest_id[0m[2m=[0mb3848664-0c84-48d2-a272-bae8cd8bbd8d [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 195.589µs
-[2m2025-10-26T13:42:51.828406Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/networkinfo [3mrequest_id[0m[2m=[0m64ab1e1d-f1d3-4856-9dae-4b9a5070d6d0[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:42:51.828601Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/networkinfo [3mrequest_id[0m[2m=[0m64ab1e1d-f1d3-4856-9dae-4b9a5070d6d0 [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 248.12µs
-[2m2025-10-26T13:44:23.526142Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/api/endpoints [3mrequest_id[0m[2m=[0mf469bbc5-c59a-4faa-abea-9f2d99709035[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:44:23.526312Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/api/endpoints [3mrequest_id[0m[2m=[0mf469bbc5-c59a-4faa-abea-9f2d99709035 [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 218.405µs
-[2m2025-10-26T13:44:32.956464Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_transfer [3mrequest_id[0m[2m=[0mc5cb714e-b7bf-4564-85cd-8c59a4142cd9[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:44:32.956681Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_transfer [3mrequest_id[0m[2m=[0mc5cb714e-b7bf-4564-85cd-8c59a4142cd9 [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 291.589µs
-[2m2025-10-26T13:49:57.500889Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/api [3mrequest_id[0m[2m=[0m3d08d46f-1c00-470e-87d4-2e924a8f9a0f[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:49:57.501127Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/api [3mrequest_id[0m[2m=[0m3d08d46f-1c00-470e-87d4-2e924a8f9a0f [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 308.947µs
-[2m2025-10-26T13:50:09.927266Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/getinfo [3mrequest_id[0m[2m=[0m97e0a2e4-b365-4aa4-9de7-df0147e43b69[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:50:09.927431Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/getinfo [3mrequest_id[0m[2m=[0m97e0a2e4-b365-4aa4-9de7-df0147e43b69 [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 220.173µs
-[2m2025-10-26T13:50:09.933920Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/balance [3mrequest_id[0m[2m=[0mee4eb69c-6cdc-48b9-8ff4-c37d4628ef07[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:50:09.934067Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/balance [3mrequest_id[0m[2m=[0mee4eb69c-6cdc-48b9-8ff4-c37d4628ef07 [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 200.038µs
-[2m2025-10-26T13:50:09.940501Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/channels [3mrequest_id[0m[2m=[0mc3332bed-c998-41ce-88da-9d5b83ec7f28[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:50:09.940643Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/channels [3mrequest_id[0m[2m=[0mc3332bed-c998-41ce-88da-9d5b83ec7f28 [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 194.115µs
-[2m2025-10-26T13:50:09.946908Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/invoice [3mrequest_id[0m[2m=[0mec1bdaeb-3999-4192-be8b-0981d8da8beb[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:50:09.947069Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/invoice [3mrequest_id[0m[2m=[0mec1bdaeb-3999-4192-be8b-0981d8da8beb [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 210.226µs
-[2m2025-10-26T13:50:09.953118Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/payment [3mrequest_id[0m[2m=[0m86e5a93a-1c82-4239-a015-aefde73b7691[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:50:09.953260Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/payment [3mrequest_id[0m[2m=[0m86e5a93a-1c82-4239-a015-aefde73b7691 [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 188.976µs
-[2m2025-10-26T13:50:09.959012Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/transfer [3mrequest_id[0m[2m=[0m57e1b0c8-f502-4c21-b017-ac93ab726ca5[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:50:09.959170Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/transfer [3mrequest_id[0m[2m=[0m57e1b0c8-f502-4c21-b017-ac93ab726ca5 [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 206.163µs
-[2m2025-10-26T13:50:09.964931Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/send [3mrequest_id[0m[2m=[0m9df7ac58-388b-4c94-b973-c60a4ae2b39e[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:50:09.965064Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/send [3mrequest_id[0m[2m=[0m9df7ac58-388b-4c94-b973-c60a4ae2b39e [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 182.588µs
-[2m2025-10-26T13:50:17.058155Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m114.059µs [3melapsed_secs[0m[2m=[0m0.000114059
-[2m2025-10-26T13:50:18.564769Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/send [3mrequest_id[0m[2m=[0mdc0b321c-004b-408c-a89f-bfc6c0d73e2b[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:50:18.564991Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/send [3mrequest_id[0m[2m=[0mdc0b321c-004b-408c-a89f-bfc6c0d73e2b [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 271.228µs
-[2m2025-10-26T13:50:18.571748Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/transfer [3mrequest_id[0m[2m=[0m650b9577-306c-4572-8658-5f3c46bceb2e[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:50:18.571952Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/transfer [3mrequest_id[0m[2m=[0m650b9577-306c-4572-8658-5f3c46bceb2e [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 267.831µs
-[2m2025-10-26T13:50:18.579690Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/payment [3mrequest_id[0m[2m=[0m774e4f88-0219-4f80-9307-7f909f23b652[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:50:18.579908Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/payment [3mrequest_id[0m[2m=[0m774e4f88-0219-4f80-9307-7f909f23b652 [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 284.227µs
-[2m2025-10-26T13:50:18.587097Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/invoice [3mrequest_id[0m[2m=[0mce52e637-6d94-49d6-8a14-8e8d71d41ffb[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T13:50:18.587253Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/invoice [3mrequest_id[0m[2m=[0mce52e637-6d94-49d6-8a14-8e8d71d41ffb [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 210.27µs
-[2m2025-10-26T14:00:17.061532Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m125.108µs [3melapsed_secs[0m[2m=[0m0.000125108
-[2m2025-10-26T14:10:17.062171Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m119.557µs [3melapsed_secs[0m[2m=[0m0.000119557
-[2m2025-10-26T14:20:17.064182Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m59.973µs [3melapsed_secs[0m[2m=[0m5.9973e-5
-[2m2025-10-26T14:30:17.067318Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m118.731µs [3melapsed_secs[0m[2m=[0m0.000118731
-[2m2025-10-26T14:40:17.069982Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m42.165µs [3melapsed_secs[0m[2m=[0m4.2165e-5
-[2m2025-10-26T14:50:17.070868Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m95.661µs [3melapsed_secs[0m[2m=[0m9.5661e-5
-[2m2025-10-26T15:00:17.072725Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m179.777µs [3melapsed_secs[0m[2m=[0m0.000179777
-[2m2025-10-26T15:10:17.075756Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m138.191µs [3melapsed_secs[0m[2m=[0m0.000138191
-[2m2025-10-26T15:20:17.077022Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m40.303µs [3melapsed_secs[0m[2m=[0m4.0303e-5
-[2m2025-10-26T15:25:17.078690Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m69.122µs [3melapsed_secs[0m[2m=[0m6.9122e-5
-[2m2025-10-26T15:35:17.081259Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m128.062µs [3melapsed_secs[0m[2m=[0m0.000128062
-[2m2025-10-26T15:45:17.083116Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m141.475µs [3melapsed_secs[0m[2m=[0m0.000141475
-[2m2025-10-26T15:55:17.103026Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m75.692µs [3melapsed_secs[0m[2m=[0m7.5692e-5
-[2m2025-10-26T16:05:17.096327Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m121.614µs [3melapsed_secs[0m[2m=[0m0.000121614
-[2m2025-10-26T16:15:17.099980Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m143.962µs [3melapsed_secs[0m[2m=[0m0.000143962
-[2m2025-10-26T16:25:17.100875Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m158.943µs [3melapsed_secs[0m[2m=[0m0.000158943
-[2m2025-10-26T16:35:17.103546Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m159.414µs [3melapsed_secs[0m[2m=[0m0.000159414
-[2m2025-10-26T16:45:17.105175Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m133.644µs [3melapsed_secs[0m[2m=[0m0.000133644
-[2m2025-10-26T16:50:51.843913Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0m714efac4-f8d0-4eed-917f-3129da45c7ec[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T16:50:51.844860Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0m714efac4-f8d0-4eed-917f-3129da45c7ec [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 722.832µs
-[2m2025-10-26T16:50:51.848282Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0m45b65140-d68e-418a-b69c-94ee72876914[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T16:50:51.848407Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0m45b65140-d68e-418a-b69c-94ee72876914 [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 158.942µs
-[2m2025-10-26T16:55:17.107092Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m124.083µs [3melapsed_secs[0m[2m=[0m0.000124083
-[2m2025-10-26T16:59:10.134267Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/invoice [3mrequest_id[0m[2m=[0ma775d567-a5e0-4648-b64c-d87a9e9f6204[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T16:59:10.134445Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/invoice [3mrequest_id[0m[2m=[0ma775d567-a5e0-4648-b64c-d87a9e9f6204 [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 222.69µs
-[2m2025-10-26T17:01:12.140958Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/listchannels [3mrequest_id[0m[2m=[0m0268b18e-e3c4-4e13-a9f8-a37d93a4f691[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T17:01:12.141141Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/listchannels [3mrequest_id[0m[2m=[0m0268b18e-e3c4-4e13-a9f8-a37d93a4f691 [3mstatus_code[0m[2m=[0m405 Method Not Allowed[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 241.934µs
-[2m2025-10-26T17:02:00.338328Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m9e499766-7a5b-44ce-838e-2f93cd5deb5f[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T17:02:00.342674Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m9e499766-7a5b-44ce-838e-2f93cd5deb5f[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Initializing multi-user database on-demand...
-[2m2025-10-26T17:02:00.342769Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m9e499766-7a5b-44ce-838e-2f93cd5deb5f[1m}[0m[2m:[0m [2mrgb_lightning_node::utils[0m[2m:[0m Initializing PostgreSQL database for multi-user support after unlock
-[2m2025-10-26T17:02:00.359226Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m9e499766-7a5b-44ce-838e-2f93cd5deb5f[1m}[0m[2m:[0m [2mrgb_lightning_node::utils[0m[2m:[0m Multi-user database support enabled successfully
-[2m2025-10-26T17:02:00.379648Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m9e499766-7a5b-44ce-838e-2f93cd5deb5f[1m}[0m[2m:[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"backup_info\".\"idx\", \"backup_info\".\"last_backup_timestamp\", \"backup_info\".\"last_operation_timestamp\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"backup_info\".\"idx\", \"backup_info\".\"last_backup_timestamp\", \"backup_info\".\"last_operation_timestamp\" FROM \"backup_info\" LIMIT ?\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m1.709764ms [3melapsed_secs[0m[2m=[0m0.001709764
-[2m2025-10-26T17:02:00.380697Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m9e499766-7a5b-44ce-838e-2f93cd5deb5f[1m}[0m[2m:[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m28.297µs [3melapsed_secs[0m[2m=[0m2.8297e-5
-[2m2025-10-26T17:02:00.388006Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m9e499766-7a5b-44ce-838e-2f93cd5deb5f[1m}[0m[2m:[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"UPDATE \"backup_info\" SET \"last_operation_timestamp\" …" [3mdb.statement[0m[2m=[0m"\n\nUPDATE \"backup_info\" SET \"last_operation_timestamp\" = ? WHERE \"backup_info\".\"idx\" = ?\n" [3mrows_affected[0m[2m=[0m1 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m7.106802ms [3melapsed_secs[0m[2m=[0m0.007106802
-[2m2025-10-26T17:02:00.388539Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m9e499766-7a5b-44ce-838e-2f93cd5deb5f[1m}[0m[2m:[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m29.491µs [3melapsed_secs[0m[2m=[0m2.9491e-5
-[2m2025-10-26T17:02:00.389088Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m9e499766-7a5b-44ce-838e-2f93cd5deb5f[1m}[0m[2m:[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"backup_info\".\"idx\", \"backup_info\".\"last_backup_timestamp\", \"backup_info\".\"last_operation_timestamp\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"backup_info\".\"idx\", \"backup_info\".\"last_backup_timestamp\", \"backup_info\".\"last_operation_timestamp\" FROM \"backup_info\" WHERE \"backup_info\".\"idx\" = ? LIMIT ?\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m371.887µs [3melapsed_secs[0m[2m=[0m0.000371887
-[2m2025-10-26T17:02:00.392715Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m9e499766-7a5b-44ce-838e-2f93cd5deb5f [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 54.463969ms
-[2m2025-10-26T17:02:00.393656Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m191c76ff-fcc4-422e-b8ff-f43d210585d4[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T17:02:00.396461Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m191c76ff-fcc4-422e-b8ff-f43d210585d4[1m}[0m[2m:[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"backup_info\".\"idx\", \"backup_info\".\"last_backup_timestamp\", \"backup_info\".\"last_operation_timestamp\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"backup_info\".\"idx\", \"backup_info\".\"last_backup_timestamp\", \"backup_info\".\"last_operation_timestamp\" FROM \"backup_info\" LIMIT ?\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m50.779µs [3melapsed_secs[0m[2m=[0m5.0779e-5
-[2m2025-10-26T17:02:00.403425Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m191c76ff-fcc4-422e-b8ff-f43d210585d4[1m}[0m[2m:[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"UPDATE \"backup_info\" SET \"last_operation_timestamp\" …" [3mdb.statement[0m[2m=[0m"\n\nUPDATE \"backup_info\" SET \"last_operation_timestamp\" = ? WHERE \"backup_info\".\"idx\" = ?\n" [3mrows_affected[0m[2m=[0m1 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m6.604551ms [3melapsed_secs[0m[2m=[0m0.006604551
-[2m2025-10-26T17:02:00.403779Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m191c76ff-fcc4-422e-b8ff-f43d210585d4[1m}[0m[2m:[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"backup_info\".\"idx\", \"backup_info\".\"last_backup_timestamp\", \"backup_info\".\"last_operation_timestamp\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"backup_info\".\"idx\", \"backup_info\".\"last_backup_timestamp\", \"backup_info\".\"last_operation_timestamp\" FROM \"backup_info\" WHERE \"backup_info\".\"idx\" = ? LIMIT ?\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m37.011µs [3melapsed_secs[0m[2m=[0m3.7011e-5
-[2m2025-10-26T17:02:00.405853Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m191c76ff-fcc4-422e-b8ff-f43d210585d4 [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 12.225345ms
-[2m2025-10-26T17:06:51.255412Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/listchannels [3mrequest_id[0m[2m=[0m860897bb-eecb-4c7a-af9f-72c68cdb3247[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T17:06:51.258142Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/listchannels [3mrequest_id[0m[2m=[0m860897bb-eecb-4c7a-af9f-72c68cdb3247 [3mstatus_code[0m[2m=[0m405 Method Not Allowed[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 2.957004ms
-[2m2025-10-26T17:08:15.689860Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m2cb1143c-d090-409a-baec-238914107e6f[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T17:08:15.696303Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m2cb1143c-d090-409a-baec-238914107e6f[1m}[0m[2m:[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"backup_info\".\"idx\", \"backup_info\".\"last_backup_timestamp\", \"backup_info\".\"last_operation_timestamp\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"backup_info\".\"idx\", \"backup_info\".\"last_backup_timestamp\", \"backup_info\".\"last_operation_timestamp\" FROM \"backup_info\" LIMIT ?\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m1.310327ms [3melapsed_secs[0m[2m=[0m0.001310327
-[2m2025-10-26T17:08:15.703411Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m2cb1143c-d090-409a-baec-238914107e6f[1m}[0m[2m:[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"UPDATE \"backup_info\" SET \"last_operation_timestamp\" …" [3mdb.statement[0m[2m=[0m"\n\nUPDATE \"backup_info\" SET \"last_operation_timestamp\" = ? WHERE \"backup_info\".\"idx\" = ?\n" [3mrows_affected[0m[2m=[0m1 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m6.695034ms [3melapsed_secs[0m[2m=[0m0.006695034
-[2m2025-10-26T17:08:15.703889Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m2cb1143c-d090-409a-baec-238914107e6f[1m}[0m[2m:[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"backup_info\".\"idx\", \"backup_info\".\"last_backup_timestamp\", \"backup_info\".\"last_operation_timestamp\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"backup_info\".\"idx\", \"backup_info\".\"last_backup_timestamp\", \"backup_info\".\"last_operation_timestamp\" FROM \"backup_info\" WHERE \"backup_info\".\"idx\" = ? LIMIT ?\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m55.678µs [3melapsed_secs[0m[2m=[0m5.5678e-5
-[2m2025-10-26T17:08:15.713081Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m2cb1143c-d090-409a-baec-238914107e6f [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 23.393517ms
-[2m2025-10-26T17:08:15.714082Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m0405f333-09f4-4ef2-b6f0-96cfdbbf20c8[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T17:08:15.716371Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m0405f333-09f4-4ef2-b6f0-96cfdbbf20c8[1m}[0m[2m:[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"backup_info\".\"idx\", \"backup_info\".\"last_backup_timestamp\", \"backup_info\".\"last_operation_timestamp\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"backup_info\".\"idx\", \"backup_info\".\"last_backup_timestamp\", \"backup_info\".\"last_operation_timestamp\" FROM \"backup_info\" LIMIT ?\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m50.927µs [3melapsed_secs[0m[2m=[0m5.0927e-5
-[2m2025-10-26T17:08:15.723340Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m0405f333-09f4-4ef2-b6f0-96cfdbbf20c8[1m}[0m[2m:[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"UPDATE \"backup_info\" SET \"last_operation_timestamp\" …" [3mdb.statement[0m[2m=[0m"\n\nUPDATE \"backup_info\" SET \"last_operation_timestamp\" = ? WHERE \"backup_info\".\"idx\" = ?\n" [3mrows_affected[0m[2m=[0m1 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m6.60061ms [3melapsed_secs[0m[2m=[0m0.00660061
-[2m2025-10-26T17:08:15.723730Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m0405f333-09f4-4ef2-b6f0-96cfdbbf20c8[1m}[0m[2m:[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"backup_info\".\"idx\", \"backup_info\".\"last_backup_timestamp\", \"backup_info\".\"last_operation_timestamp\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"backup_info\".\"idx\", \"backup_info\".\"last_backup_timestamp\", \"backup_info\".\"last_operation_timestamp\" FROM \"backup_info\" WHERE \"backup_info\".\"idx\" = ? LIMIT ?\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m50.831µs [3melapsed_secs[0m[2m=[0m5.0831e-5
-[2m2025-10-26T17:08:15.725871Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0m0405f333-09f4-4ef2-b6f0-96cfdbbf20c8 [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 11.815608ms
-[2m2025-10-26T17:11:23.587734Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/listchannels [3mrequest_id[0m[2m=[0m20793ea7-b6a4-45ad-b551-2e08f5e0c404[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T17:11:23.590485Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/listchannels [3mrequest_id[0m[2m=[0m20793ea7-b6a4-45ad-b551-2e08f5e0c404 [3mstatus_code[0m[2m=[0m405 Method Not Allowed[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 2.950872ms
-[2m2025-10-26T17:15:17.118440Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m253.547µs [3melapsed_secs[0m[2m=[0m0.000253547
-[2m2025-10-26T17:16:57.261695Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/listchannels [3mrequest_id[0m[2m=[0m2fdce60e-049f-4d66-8ecd-e552b19a018b[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T17:16:57.263148Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/listchannels [3mrequest_id[0m[2m=[0m2fdce60e-049f-4d66-8ecd-e552b19a018b [3mstatus_code[0m[2m=[0m405 Method Not Allowed[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 1.505337ms
-[2m2025-10-26T17:19:17.000284Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/invoice [3mrequest_id[0m[2m=[0m53545389-f301-4da6-b70d-eb85ed96e538[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T17:19:17.001120Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/invoice [3mrequest_id[0m[2m=[0m53545389-f301-4da6-b70d-eb85ed96e538 [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 882.159µs
-[2m2025-10-26T17:24:52.814382Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/invoice [3mrequest_id[0m[2m=[0m744dd6ef-1c31-4805-b5be-6db5e767acdc[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T17:24:52.815409Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/invoice [3mrequest_id[0m[2m=[0m744dd6ef-1c31-4805-b5be-6db5e767acdc [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 1.840858ms
-[2m2025-10-26T17:25:17.125537Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m73.491µs [3melapsed_secs[0m[2m=[0m7.3491e-5
-[2m2025-10-26T17:26:46.517665Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/health [3mrequest_id[0m[2m=[0m9f721e1a-d5ed-4018-a0a6-7ec11732158b[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T17:26:46.518998Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/health [3mrequest_id[0m[2m=[0m9f721e1a-d5ed-4018-a0a6-7ec11732158b [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 1.398598ms
-[2m2025-10-26T17:26:50.962454Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/health [3mrequest_id[0m[2m=[0m9e0fd4c4-701c-4ce0-a32a-b9340d42336b[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T17:26:50.962911Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/health [3mrequest_id[0m[2m=[0m9e0fd4c4-701c-4ce0-a32a-b9340d42336b [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 581.359µs
-[2m2025-10-26T17:30:38.971079Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/nodeinfo [3mrequest_id[0m[2m=[0mb3cf25ee-adfa-469c-87df-5c688e5bd757[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T17:30:38.982037Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/nodeinfo [3mrequest_id[0m[2m=[0mb3cf25ee-adfa-469c-87df-5c688e5bd757 [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 11.170634ms
-[2m2025-10-26T17:33:34.140636Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/invoice [3mrequest_id[0m[2m=[0m3a85a312-98c5-4c9e-92f9-07a79711fc41[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T17:33:34.141923Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/invoice [3mrequest_id[0m[2m=[0m3a85a312-98c5-4c9e-92f9-07a79711fc41 [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 1.359582ms
-[2m2025-10-26T17:35:17.139450Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m442.255µs [3melapsed_secs[0m[2m=[0m0.000442255
-[2m2025-10-26T17:36:35.744632Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/lninvoice [3mrequest_id[0m[2m=[0m9acd56be-8286-4357-89ca-abebb305819c[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T17:36:35.783295Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/lninvoice [3mrequest_id[0m[2m=[0m9acd56be-8286-4357-89ca-abebb305819c [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 39.738302ms
-[2m2025-10-26T17:39:04.662816Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/invoice [3mrequest_id[0m[2m=[0m54ceb2fa-ffc4-4ee3-a821-3b3f31f36c4d[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T17:39:04.663943Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/invoice [3mrequest_id[0m[2m=[0m54ceb2fa-ffc4-4ee3-a821-3b3f31f36c4d [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 1.186719ms
-[2m2025-10-26T17:41:40.023307Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/lninvoice [3mrequest_id[0m[2m=[0md71a1df0-4944-462a-bde2-59a50668be3a[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T17:41:40.044387Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/lninvoice [3mrequest_id[0m[2m=[0md71a1df0-4944-462a-bde2-59a50668be3a [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 21.281811ms
-[2m2025-10-26T17:42:44.091468Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/lninvoice [3mrequest_id[0m[2m=[0mb6109434-4854-4142-af58-092613335316[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T17:42:44.098595Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/lninvoice [3mrequest_id[0m[2m=[0mb6109434-4854-4142-af58-092613335316 [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 7.16243ms
-[2m2025-10-26T17:45:32.836251Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/sendpayment [3mrequest_id[0m[2m=[0m6e5e2321-4ae9-453e-9a9b-b1684ac59207[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T17:45:32.851847Z[0m [31mERROR[0m [2mrgb_lightning_node::routes[0m[2m:[0m ERROR: failed to send payment: RouteNotFound
-[2m2025-10-26T17:45:32.857277Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/sendpayment [3mrequest_id[0m[2m=[0m6e5e2321-4ae9-453e-9a9b-b1684ac59207 [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 21.064351ms
-[2m2025-10-26T17:46:41.312477Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m96cb231f-2ee4-4ab7-870b-a68c982de11e[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T17:46:41.338513Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m96cb231f-2ee4-4ab7-870b-a68c982de11e [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 26.212602ms
-[2m2025-10-26T17:50:17.140410Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m299.97µs [3melapsed_secs[0m[2m=[0m0.00029997
-[2m2025-10-26T18:00:17.134311Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m132.611µs [3melapsed_secs[0m[2m=[0m0.000132611
-[2m2025-10-26T18:00:22.626540Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0mdd6bb4bf-f39a-4b1b-910e-25e5dcd17272[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T18:00:22.639725Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0mdd6bb4bf-f39a-4b1b-910e-25e5dcd17272 [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 13.374782ms
-[2m2025-10-26T18:10:17.135812Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m126.688µs [3melapsed_secs[0m[2m=[0m0.000126688
-[2m2025-10-26T18:20:17.138724Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m150.244µs [3melapsed_secs[0m[2m=[0m0.000150244
-[2m2025-10-26T18:30:17.141161Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m115.796µs [3melapsed_secs[0m[2m=[0m0.000115796
-[2m2025-10-26T18:40:17.143609Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m150.332µs [3melapsed_secs[0m[2m=[0m0.000150332
-[2m2025-10-26T18:50:17.143754Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m50.988µs [3melapsed_secs[0m[2m=[0m5.0988e-5
-[2m2025-10-26T18:55:17.146324Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m127.555µs [3melapsed_secs[0m[2m=[0m0.000127555
-[2m2025-10-26T19:05:17.148328Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m119.497µs [3melapsed_secs[0m[2m=[0m0.000119497
-[2m2025-10-26T19:15:17.149045Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m50.195µs [3melapsed_secs[0m[2m=[0m5.0195e-5
-[2m2025-10-26T19:20:17.151200Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m121.649µs [3melapsed_secs[0m[2m=[0m0.000121649
-[2m2025-10-26T19:30:17.153476Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m156.09µs [3melapsed_secs[0m[2m=[0m0.00015609
-[2m2025-10-26T19:40:17.155445Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m39.578µs [3melapsed_secs[0m[2m=[0m3.9578e-5
-[2m2025-10-26T19:45:17.157756Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m134.455µs [3melapsed_secs[0m[2m=[0m0.000134455
-[2m2025-10-26T19:55:17.160735Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m134.817µs [3melapsed_secs[0m[2m=[0m0.000134817
-[2m2025-10-26T20:05:17.164557Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m176.654µs [3melapsed_secs[0m[2m=[0m0.000176654
-[2m2025-10-26T20:15:17.166509Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m66.137µs [3melapsed_secs[0m[2m=[0m6.6137e-5
-[2m2025-10-26T20:20:17.168415Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m121.756µs [3melapsed_secs[0m[2m=[0m0.000121756
-[2m2025-10-26T20:30:17.170464Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m140.205µs [3melapsed_secs[0m[2m=[0m0.000140205
-[2m2025-10-26T20:40:17.172581Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m144.855µs [3melapsed_secs[0m[2m=[0m0.000144855
-[2m2025-10-26T20:50:17.175021Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m132.083µs [3melapsed_secs[0m[2m=[0m0.000132083
-[2m2025-10-26T20:55:18.268163Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m135.822µs [3melapsed_secs[0m[2m=[0m0.000135822
-[2m2025-10-26T21:05:18.270768Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m148.614µs [3melapsed_secs[0m[2m=[0m0.000148614
-[2m2025-10-26T21:15:18.273106Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m119.028µs [3melapsed_secs[0m[2m=[0m0.000119028
-[2m2025-10-26T21:25:18.275450Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m157.464µs [3melapsed_secs[0m[2m=[0m0.000157464
-[2m2025-10-26T21:35:18.333375Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m172.534µs [3melapsed_secs[0m[2m=[0m0.000172534
-[2m2025-10-26T21:45:18.281586Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m121.192µs [3melapsed_secs[0m[2m=[0m0.000121192
-[2m2025-10-26T21:55:18.283033Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m47.601µs [3melapsed_secs[0m[2m=[0m4.7601e-5
-[2m2025-10-26T22:00:18.292378Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m58.646µs [3melapsed_secs[0m[2m=[0m5.8646e-5
-[2m2025-10-26T22:10:18.288787Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m44.334µs [3melapsed_secs[0m[2m=[0m4.4334e-5
-[2m2025-10-26T22:15:18.294646Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m131.351µs [3melapsed_secs[0m[2m=[0m0.000131351
-[2m2025-10-26T22:20:18.311109Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m198.337µs [3melapsed_secs[0m[2m=[0m0.000198337
-[2m2025-10-26T22:30:18.320311Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m63.184µs [3melapsed_secs[0m[2m=[0m6.3184e-5
-[2m2025-10-26T22:32:24.925102Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0m708063cd-a785-4aba-b63e-5bedaf90a5a5[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T22:32:24.926080Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0m708063cd-a785-4aba-b63e-5bedaf90a5a5 [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 790.398µs
-[2m2025-10-26T22:32:24.929559Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0md2473fe9-f45f-4659-8b49-bde2c8ca59a5[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-26T22:32:24.929681Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0md2473fe9-f45f-4659-8b49-bde2c8ca59a5 [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 153.893µs
-[2m2025-10-26T22:40:18.313442Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m156.333µs [3melapsed_secs[0m[2m=[0m0.000156333
-[2m2025-10-26T22:50:18.316464Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m141.012µs [3melapsed_secs[0m[2m=[0m0.000141012
-[2m2025-10-26T23:00:18.318713Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m135.174µs [3melapsed_secs[0m[2m=[0m0.000135174
-[2m2025-10-27T20:26:30.277059Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m127.968µs [3melapsed_secs[0m[2m=[0m0.000127968
-[2m2025-10-27T20:36:30.279300Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m146.05µs [3melapsed_secs[0m[2m=[0m0.00014605
-[2m2025-10-27T20:46:30.281647Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m135.199µs [3melapsed_secs[0m[2m=[0m0.000135199
-[2m2025-10-27T20:56:30.282813Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m45.453µs [3melapsed_secs[0m[2m=[0m4.5453e-5
-[2m2025-10-27T21:01:30.284579Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m49.308µs [3melapsed_secs[0m[2m=[0m4.9308e-5
-[2m2025-10-27T21:06:30.286666Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m117.244µs [3melapsed_secs[0m[2m=[0m0.000117244
-[2m2025-10-27T21:16:21.173740Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/balance [3mrequest_id[0m[2m=[0m8ceca218-c8a9-443e-a8df-ff3d51eaff92[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-27T21:16:21.173957Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/balance [3mrequest_id[0m[2m=[0m8ceca218-c8a9-443e-a8df-ff3d51eaff92 [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 267.606µs
-[2m2025-10-27T21:16:30.288924Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m132.642µs [3melapsed_secs[0m[2m=[0m0.000132642
-[2m2025-10-27T21:26:30.290325Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m49.959µs [3melapsed_secs[0m[2m=[0m4.9959e-5
-[2m2025-10-27T21:36:30.292421Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m44.731µs [3melapsed_secs[0m[2m=[0m4.4731e-5
-[2m2025-10-27T21:41:30.293984Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m42.595µs [3melapsed_secs[0m[2m=[0m4.2595e-5
-[2m2025-10-27T21:46:30.294935Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m41.381µs [3melapsed_secs[0m[2m=[0m4.1381e-5
-[2m2025-10-27T21:51:30.298158Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m121.342µs [3melapsed_secs[0m[2m=[0m0.000121342
-[2m2025-10-27T22:01:30.299918Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m125.13µs [3melapsed_secs[0m[2m=[0m0.00012513
-[2m2025-10-27T22:11:30.301976Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m127.188µs [3melapsed_secs[0m[2m=[0m0.000127188
-[2m2025-10-27T22:21:30.304964Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m122.237µs [3melapsed_secs[0m[2m=[0m0.000122237
-[2m2025-10-27T22:31:30.306499Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m42.213µs [3melapsed_secs[0m[2m=[0m4.2213e-5
-[2m2025-10-27T22:34:51.562538Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/listchannels [3mrequest_id[0m[2m=[0me08d7835-62bd-4ef3-89d9-149b5602b6bc[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-27T22:34:51.562724Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/listchannels [3mrequest_id[0m[2m=[0me08d7835-62bd-4ef3-89d9-149b5602b6bc [3mstatus_code[0m[2m=[0m405 Method Not Allowed[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 232.829µs
-[2m2025-10-27T22:34:51.563550Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m8da2ce33-b531-45c6-98ae-35cd28845fdc[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-27T22:34:51.580367Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m8da2ce33-b531-45c6-98ae-35cd28845fdc [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 16.833615ms
-[2m2025-10-27T22:36:09.563158Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/lninvoice [3mrequest_id[0m[2m=[0m3aafa0a6-5297-436d-9624-15a9789195e5[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-27T22:36:09.578369Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/lninvoice [3mrequest_id[0m[2m=[0m3aafa0a6-5297-436d-9624-15a9789195e5 [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 15.272273ms
-[2m2025-10-27T22:36:30.309461Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m130.845µs [3melapsed_secs[0m[2m=[0m0.000130845
-[2m2025-10-27T22:38:19.921666Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0me58079af-a239-4a6f-b3c3-7b405c03ff0c[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-27T22:38:19.921818Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0me58079af-a239-4a6f-b3c3-7b405c03ff0c [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 200.3µs
-[2m2025-10-27T22:38:19.924593Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0mc3cd4f67-9755-47d9-90e6-8b45ba2a75ac[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-10-27T22:38:19.924733Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_node_id [3mrequest_id[0m[2m=[0mc3cd4f67-9755-47d9-90e6-8b45ba2a75ac [3mstatus_code[0m[2m=[0m404 Not Found[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 173.47µs
-[2m2025-10-27T22:46:30.311519Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m66.492µs [3melapsed_secs[0m[2m=[0m6.6492e-5
-[2m2025-10-27T22:51:30.313964Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m125.338µs [3melapsed_secs[0m[2m=[0m0.000125338
-[2m2025-10-27T23:01:30.315790Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m133.773µs [3melapsed_secs[0m[2m=[0m0.000133773
-[2m2025-10-27T23:11:30.317711Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m136.626µs [3melapsed_secs[0m[2m=[0m0.000136626
+[2m2025-11-02T15:09:22.690355Z[0m [32m INFO[0m [2mrgb_lightning_node::utils[0m[2m:[0m DATABASE_URL found - multi-user support will be enabled after unlock
+[2m2025-11-02T15:09:22.693064Z[0m [32m INFO[0m [2mrgb_lightning_node[0m[2m:[0m Listening on 0.0.0.0:3001
+[2m2025-11-02T15:09:24.286506Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/networkinfo [3mrequest_id[0m[2m=[0m11a0d0a8-613c-4163-b038-381c07874a83[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
+[2m2025-11-02T15:09:24.286814Z[0m [31mERROR[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/networkinfo [3mrequest_id[0m[2m=[0m11a0d0a8-613c-4163-b038-381c07874a83[1m}[0m[2m:[0m [2mrgb_lightning_node::error[0m[2m:[0m APIError: Node is locked (hint: call unlock)
+[2m2025-11-02T15:09:24.287197Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/networkinfo [3mrequest_id[0m[2m=[0m11a0d0a8-613c-4163-b038-381c07874a83 [3mstatus_code[0m[2m=[0m403 Forbidden[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 775.839µs
+[2m2025-11-02T15:09:24.295004Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/init [3mrequest_id[0m[2m=[0m41a79b99-b73b-4b91-ad03-ee59a42ebbdb[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
+[2m2025-11-02T15:09:24.295416Z[0m [31mERROR[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/init [3mrequest_id[0m[2m=[0m41a79b99-b73b-4b91-ad03-ee59a42ebbdb[1m}[0m[2m:[0m [2mrgb_lightning_node::error[0m[2m:[0m APIError: Node has already been initialized
+[2m2025-11-02T15:09:24.295571Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/init [3mrequest_id[0m[2m=[0m41a79b99-b73b-4b91-ad03-ee59a42ebbdb [3mstatus_code[0m[2m=[0m403 Forbidden[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 648.994µs
+[2m2025-11-02T15:09:29.305459Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/unlock [3mrequest_id[0m[2m=[0ma1c046e5-1a3e-4f83-8e8c-9551a6b49924[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
+[2m2025-11-02T15:09:29.305716Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/unlock [3mrequest_id[0m[2m=[0ma1c046e5-1a3e-4f83-8e8c-9551a6b49924[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Unlock started
+[2m2025-11-02T15:09:36.811586Z[0m [32m INFO[0m [2melectrum_client::raw_client[0m[2m:[0m Trying to connect to 34.154.172.18:50013 (attempt 1/1) with timeout 10s    
+[2m2025-11-02T15:09:42.669201Z[0m [32m INFO[0m [2mrgb_lightning_node::ldk[0m[2m:[0m Connected to an indexer with the Electrum protocol
+[2m2025-11-02T15:09:49.269451Z[0m [32m INFO[0m [2mrgb_lightning_node::ldk[0m[2m:[0m Using a custom proxy
+[2m2025-11-02T15:09:50.098045Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m39.474µs [3melapsed_secs[0m[2m=[0m3.9474e-5
+[2m2025-11-02T15:09:50.098737Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"CREATE TABLE IF NOT …" [3mdb.statement[0m[2m=[0m"\n\nCREATE TABLE IF NOT EXISTS \"seaql_migrations\" ( \"version\" varchar NOT NULL PRIMARY KEY, \"applied_at\" bigint NOT NULL )\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m332.078µs [3melapsed_secs[0m[2m=[0m0.000332078
+[2m2025-11-02T15:09:50.098835Z[0m [32m INFO[0m [2msea_orm_migration::migrator[0m[2m:[0m Applying all pending migrations
+[2m2025-11-02T15:09:50.099003Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"CREATE TABLE IF NOT …" [3mdb.statement[0m[2m=[0m"\n\nCREATE TABLE IF NOT EXISTS \"seaql_migrations\" ( \"version\" varchar NOT NULL PRIMARY KEY, \"applied_at\" bigint NOT NULL )\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m21.31µs [3melapsed_secs[0m[2m=[0m2.131e-5
+[2m2025-11-02T15:09:50.099408Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m24.024µs [3melapsed_secs[0m[2m=[0m2.4024e-5
+[2m2025-11-02T15:09:50.099850Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"CREATE TABLE IF NOT …" [3mdb.statement[0m[2m=[0m"\n\nCREATE TABLE IF NOT EXISTS \"seaql_migrations\" ( \"version\" varchar NOT NULL PRIMARY KEY, \"applied_at\" bigint NOT NULL )\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m298.943µs [3melapsed_secs[0m[2m=[0m0.000298943
+[2m2025-11-02T15:09:50.100063Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"CREATE TABLE IF NOT …" [3mdb.statement[0m[2m=[0m"\n\nCREATE TABLE IF NOT EXISTS \"seaql_migrations\" ( \"version\" varchar NOT NULL PRIMARY KEY, \"applied_at\" bigint NOT NULL )\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m19.704µs [3melapsed_secs[0m[2m=[0m1.9704e-5
+[2m2025-11-02T15:09:50.100350Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"version\", \"applied_at\" FROM …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"version\", \"applied_at\" FROM \"seaql_migrations\" ORDER BY \"version\" ASC\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m88.466µs [3melapsed_secs[0m[2m=[0m8.8466e-5
+[2m2025-11-02T15:09:50.100503Z[0m [32m INFO[0m [2msea_orm_migration::migrator[0m[2m:[0m No pending migrations
+[2m2025-11-02T15:09:50.108973Z[0m [32m INFO[0m [2melectrum_client::raw_client[0m[2m:[0m Trying to connect to 34.154.172.18:50013 (attempt 1/1) with timeout 10s    
+[2m2025-11-02T15:09:52.944181Z[0m [32m INFO[0m [2melectrum::raw_client[0m[2m:[0m Trying to connect to 34.154.172.18:50013 (attempt 1/1) with timeout 10s    
+[2m2025-11-02T15:09:58.191783Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"txo\".\"idx\", \"txo\".\"txid\", \"txo\".\"vout\", …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"txo\".\"idx\", \"txo\".\"txid\", \"txo\".\"vout\", \"txo\".\"btc_amount\", \"txo\".\"spent\", \"txo\".\"exists\", \"txo\".\"pending_witness\" FROM \"txo\"\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m419.545µs [3melapsed_secs[0m[2m=[0m0.000419545
+[2m2025-11-02T15:09:58.193601Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"pending_witness_script\".\"idx\", \"pending_witness_script\".\"script\" FROM …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"pending_witness_script\".\"idx\", \"pending_witness_script\".\"script\" FROM \"pending_witness_script\"\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m351.206µs [3melapsed_secs[0m[2m=[0m0.000351206
+[2m2025-11-02T15:09:58.195369Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"txo\".\"idx\", \"txo\".\"txid\", \"txo\".\"vout\", …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"txo\".\"idx\", \"txo\".\"txid\", \"txo\".\"vout\", \"txo\".\"btc_amount\", \"txo\".\"spent\", \"txo\".\"exists\", \"txo\".\"pending_witness\" FROM \"txo\"\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m98.291µs [3melapsed_secs[0m[2m=[0m9.8291e-5
+[2m2025-11-02T15:09:58.196968Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"asset\".\"idx\", \"asset\".\"media_idx\", \"asset\".\"id\", …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"asset\".\"idx\", \"asset\".\"media_idx\", \"asset\".\"id\", \"asset\".\"schema\", \"asset\".\"added_at\", \"asset\".\"details\", \"asset\".\"issued_supply\", \"asset\".\"name\", \"asset\".\"precision\", \"asset\".\"ticker\", \"asset\".\"timestamp\" FROM \"asset\"\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m460.055µs [3melapsed_secs[0m[2m=[0m0.000460055
+[2m2025-11-02T15:09:58.198374Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"media\".\"idx\", \"media\".\"digest\", \"media\".\"mime\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"media\".\"idx\", \"media\".\"digest\", \"media\".\"mime\" FROM \"media\"\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m289.492µs [3melapsed_secs[0m[2m=[0m0.000289492
+[2m2025-11-02T15:10:04.683252Z[0m [32m INFO[0m [2mrgb_lightning_node::ldk[0m[2m:[0m LDK logs are available at <your-supplied-ldk-data-dir-path>/.ldk/logs
+[2m2025-11-02T15:10:04.683375Z[0m [32m INFO[0m [2mrgb_lightning_node::ldk[0m[2m:[0m Local Node ID is 02945cf9ea4a7c952c501d12de2d7f11c2ad0a81276f29c766d04bb8d281ab4ead
+[2m2025-11-02T15:10:04.683487Z[0m [32m INFO[0m [2mrgb_lightning_node::routes[0m[2m:[0m Unlock completed
+[2m2025-11-02T15:10:04.683675Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/unlock [3mrequest_id[0m[2m=[0ma1c046e5-1a3e-4f83-8e8c-9551a6b49924 [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 35.378279936s
+[2m2025-11-02T15:10:14.697082Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/nodeinfo [3mrequest_id[0m[2m=[0ma13ee71d-a757-478c-9bd9-d4e1a4fadc5e[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
+[2m2025-11-02T15:10:14.697385Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/nodeinfo [3mrequest_id[0m[2m=[0ma13ee71d-a757-478c-9bd9-d4e1a4fadc5e [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 383.427µs
+[2m2025-11-02T15:10:21.592239Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0mac1beff5-15e9-4349-92df-eaf28feca9ce[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
+[2m2025-11-02T15:10:21.592934Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0mac1beff5-15e9-4349-92df-eaf28feca9ce[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Initializing multi-user database on-demand...
+[2m2025-11-02T15:10:21.593218Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0mac1beff5-15e9-4349-92df-eaf28feca9ce[1m}[0m[2m:[0m [2mrgb_lightning_node::utils[0m[2m:[0m Initializing PostgreSQL database for multi-user support after unlock
+[2m2025-11-02T15:10:21.603738Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0mac1beff5-15e9-4349-92df-eaf28feca9ce[1m}[0m[2m:[0m [2mrgb_lightning_node::utils[0m[2m:[0m Multi-user database support enabled successfully
+[2m2025-11-02T15:10:21.606932Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0mac1beff5-15e9-4349-92df-eaf28feca9ce[1m}[0m[2m:[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"backup_info\".\"idx\", \"backup_info\".\"last_backup_timestamp\", \"backup_info\".\"last_operation_timestamp\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"backup_info\".\"idx\", \"backup_info\".\"last_backup_timestamp\", \"backup_info\".\"last_operation_timestamp\" FROM \"backup_info\" LIMIT ?\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m148.131µs [3melapsed_secs[0m[2m=[0m0.000148131
+[2m2025-11-02T15:10:21.616087Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0mac1beff5-15e9-4349-92df-eaf28feca9ce[1m}[0m[2m:[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"UPDATE \"backup_info\" SET \"last_operation_timestamp\" …" [3mdb.statement[0m[2m=[0m"\n\nUPDATE \"backup_info\" SET \"last_operation_timestamp\" = ? WHERE \"backup_info\".\"idx\" = ?\n" [3mrows_affected[0m[2m=[0m1 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m8.576831ms [3melapsed_secs[0m[2m=[0m0.008576831
+[2m2025-11-02T15:10:21.617187Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0mac1beff5-15e9-4349-92df-eaf28feca9ce[1m}[0m[2m:[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"backup_info\".\"idx\", \"backup_info\".\"last_backup_timestamp\", \"backup_info\".\"last_operation_timestamp\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"backup_info\".\"idx\", \"backup_info\".\"last_backup_timestamp\", \"backup_info\".\"last_operation_timestamp\" FROM \"backup_info\" WHERE \"backup_info\".\"idx\" = ? LIMIT ?\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m240.971µs [3melapsed_secs[0m[2m=[0m0.000240971
+[2m2025-11-02T15:10:21.622495Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/address [3mrequest_id[0m[2m=[0mac1beff5-15e9-4349-92df-eaf28feca9ce [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 30.508773ms
+[2m2025-11-02T15:10:27.566538Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
+[2m2025-11-02T15:10:27.567236Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m btc_balance called with payload: Object {"user_id": String("5984120724")}
+[2m2025-11-02T15:10:27.567546Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Processing btc_balance for user: 5984120724
+[2m2025-11-02T15:10:27.577273Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m User 5984120724 has 59 addresses
+[2m2025-11-02T15:10:27.577362Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pez9tlvell6lgw7gzgdhx4h0kqg5yllyv5fwjrvhrxkra3yaau0psgzfdee
+[2m2025-11-02T15:10:27.577424Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pkmnxfchkf88ry39mvt3mnlrej0fyepve249dqkxe4tyx4ar3swpqnflclg
+[2m2025-11-02T15:10:27.577476Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pfa85aaytmc52m4z762v2qpy2dvr7g365czsekmyzgj766xcvc96qqm63mc
+[2m2025-11-02T15:10:27.577531Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1p63q99mda2v2at8d5xeremwf08cejcr44dzc7h2rmwjdxm756nv4qwm2jzw
+[2m2025-11-02T15:10:27.577582Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pluxulyju8lg38exg3xqjp3nekru2qduz3qknmsvc4w8dvxzlwnsq2k2zre
+[2m2025-11-02T15:10:27.577630Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pqye79z30lwdjlmgt23kayltxgwfts8cdczcns329jawwlcvj2vtsxt98q7
+[2m2025-11-02T15:10:27.577690Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1p79ttta3mw9myauefun7360lqkm2yhayl3shluv5mw3h47xf2juuqpqtyan
+[2m2025-11-02T15:10:27.577747Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1p0304ngy3cs6yxahx05jmnhjm3j94mwzy6y7ya6hen3fx26du0f7s3rfvmv
+[2m2025-11-02T15:10:27.577805Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1p9qylqu8qpkmpfzmwchdzl9p5zw304nl047u3naw3aeghxyfv0zqqghlnp9
+[2m2025-11-02T15:10:27.577850Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pjf0myz38chts6dwzfjn8uuw7kpe9762ky6zq47rcru06vp9tpunq3te0lk
+[2m2025-11-02T15:10:27.577893Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1p45pwey3phv7uz5239mzhrup62m8zpvd67p6vlnhcgxd7jpgslzqskutg8a
+[2m2025-11-02T15:10:27.577937Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pnjehzw3nj0n0rhphw96gy8rsaz4w7mpz9fv38rahjkp2snqcq8qql8qm0g
+[2m2025-11-02T15:10:27.577984Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pyv2nc8c5uh6vdg2e43cumwepw632h637gnc3dh45nu5aewksj4csjlnrq8
+[2m2025-11-02T15:10:27.578030Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pyqn3sysszc4wx4wtvuq22lmq2876wcya7p2xxnukxmwweuz5a0cq8sce6r
+[2m2025-11-02T15:10:27.578080Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pvq9fw7w59ve3us3rp0xcjvwuf892tydrtjghfvsm4gvlhrxkkzvsvxkw88
+[2m2025-11-02T15:10:27.578124Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pu0jzt87vprk9m0k4zeycd65gy4h6ypccrmwr3purqesst7v2hetsaup3ns
+[2m2025-11-02T15:10:27.578166Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1p830nws99df9d2fa3hmmnu26j2x0v6nu528fql77zdtrn9hza0zjs7j26a2
+[2m2025-11-02T15:10:27.578208Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pwuemurd5q55xkamyf89kwcje8qgh6243lmd7ed2ykfsyle7h29hsmhj64n
+[2m2025-11-02T15:10:27.578262Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1p7cx3avkrt6m9p2r84n7073clnv4q0hj4n44vehr6r70vhumxhqjsm24t6x
+[2m2025-11-02T15:10:27.578321Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pe7m9zxtd4cc8qmczx5hhfpf6x7svumgj5zj0kyegcgvxdte5av0q8t28x7
+[2m2025-11-02T15:10:27.578384Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pee3ncv7lf0w02wf478k4uqa6qv944xl5djenu4getwh4j9ghv42qjxwptr
+[2m2025-11-02T15:10:27.578451Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1px8r5mjn3xyv6k203vrsv5qy97f449ga4678pm3syt3pn3sd9fxnsgajd4u
+[2m2025-11-02T15:10:27.578512Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pd8rksyyp02rs9n0s06a8dpud9qjgqaadspgqfs8g0p4nglzf5gzsy3frnw
+[2m2025-11-02T15:10:27.578590Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1ps6ej28d0y727qlclm6zdpwp4yh2kcdkas3h3v77hlqs7f2g7tuas36f9dh
+[2m2025-11-02T15:10:27.578654Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1p8detfvy7qshyxphspfqnpzx2d82yreeu88kvvxwcpngsljk7zgmsfdvqdz
+[2m2025-11-02T15:10:27.578720Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1p8p8rqn6uv4ptqnden6kgcx633nx4dx33dzpqa04dxpr6cy6cs2zswa3j3j
+[2m2025-11-02T15:10:27.578786Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pdf8m0w8qtutvgmv4cvlsz2aez0503qyqt3d2z4u64gk964st7hwsllfuxc
+[2m2025-11-02T15:10:27.578852Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1p56k4754cj67en272tgwxjy0cw70g426hm4kafwj5ye7h3xu2uw0qqngtvq
+[2m2025-11-02T15:10:27.578926Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pyytpwhsvnev5pr0n40dajmsatnklk4v6dq2cuvdscxkeuusvttps7mk2z2
+[2m2025-11-02T15:10:27.578993Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1p0xgtla7uywrzdskp47edz3utd50cqfrr4v7nftl8yqrh50zaga7skedrhn
+[2m2025-11-02T15:10:27.579058Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1p5lf6dwpyquyrldlsw2uux6tfrzs30exj5ve703uftncq3ux2zmpquxnr3d
+[2m2025-11-02T15:10:27.579124Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pu8wqm30qaakz40ggact90uvtxxlsfvfzdnnkeuapgrfupxglt2rqkmpk5s
+[2m2025-11-02T15:10:27.579191Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1prvw8qm7sa6g046hg5hys620c8zyeeg2a6kz8yncrsh4e08400uasn5wpte
+[2m2025-11-02T15:10:27.579258Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pswl4h92ereagst6pnc4a5pu9cndmlpvy5l6tgthe77w9yk58jc8qqv4px0
+[2m2025-11-02T15:10:27.579337Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1p5x7avxl4j538l8vrmay05pd6h2jkzp4huzpk5c8ldvwn2qjxtq8smk499g
+[2m2025-11-02T15:10:27.579401Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1p9t48ena75nm33tk89sfd6xw6q3kkmheq07sgg5fngt4vfkrzhfvsdaccgw
+[2m2025-11-02T15:10:27.579466Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1p5xtegn4ut4z6ahutthae2dgpw063lc2xspr4rzgljq0r8ageuq7s0jyg3p
+[2m2025-11-02T15:10:27.579540Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pxc0dsy63kalw25up5fw4gr68m2p7k5jekfszgrs0sm97f9k6nnuqzllvhq
+[2m2025-11-02T15:10:27.579602Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1p58yr62uzzdrnyf2duevuq295jsna5mavyf8sw70zwcqv99j2jvxq35mrz8
+[2m2025-11-02T15:10:27.579653Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pwuhgj5m7c8ahqgp0d6we3cw2nwzg9euzf6rqd6dpnmp3wfve2amsm879ul
+[2m2025-11-02T15:10:27.579705Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pcv6n6fafe0achhu9pppqwjssltzpgyeffzcqmntveqf82hl73dxspuy6xc
+[2m2025-11-02T15:10:27.579763Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pvqwlykhpphp79smzvlyhtx3pl7gehl9pjnw0puxlhqef8wd54lgq220vu7
+[2m2025-11-02T15:10:27.579813Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pfrgwq5c2gw5g8anag54qwrdqcejxfjlx55v2apkk0ctg8mu0qu0q45e42t
+[2m2025-11-02T15:10:27.579862Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1ph84fq50kgn6cfp5vvx5knfkhqucntvu5lsj6q39gyh5jjsrxptlslwyv6s
+[2m2025-11-02T15:10:27.579910Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1ppjdr7j239uw8hmnkpazxl8fg4zjseuj05e39ak6cy077nqga20kqm2nfzl
+[2m2025-11-02T15:10:27.579959Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1psrqdrudv7hxq0p06a0p4umgt26dfxsu9j9r7rjlrlvayyxwada8s4sy0c8
+[2m2025-11-02T15:10:27.580007Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pd8u6vgmd5vvtnhyg0dhhs4sw0fxamwfaf9u6687u8x3sryz0lqvq7hhleh
+[2m2025-11-02T15:10:27.580056Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pynpt9628gc624mpuqvydx6lc6wy8lfdwr5cr69guuwhxkxdh8tgqx0sne7
+[2m2025-11-02T15:10:27.580107Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1p7dp8cfhfjdxjumxxh29t73jdhtmlyw3x5gzfrswkedy4kznz3ggsth67gl
+[2m2025-11-02T15:10:27.580158Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pe6mr9z76vt0uepj2gyl0dd3xqsp2mzgsgr0ycvv2tjz0jt94kg8srp9xmv
+[2m2025-11-02T15:10:27.580206Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1part4chuvl3cgh93ndyqhgtfcqk2j9vace5eyl5sjych682kqkpsq8n2f87
+[2m2025-11-02T15:10:27.580246Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1phhymsf2ykn4axv6la0r4922vkpncmwlds3gajuvatqwmxr0w96hqkw50zf
+[2m2025-11-02T15:10:27.580281Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1p38lr772kmdgmerukaczeqwjpkf6ty736m48vawuu8mxa2wvmf3fsskxscn
+[2m2025-11-02T15:10:27.580315Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1p0g6wz0209l4qrt6dzesf248gg7qdgv3cp58dfrp06hmvyt6m7npq6muuvk
+[2m2025-11-02T15:10:27.580350Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pceqyqhsvm8cyay6yfda54676frlt60a9zuj4sayay73lnqpn6y5sdgc5px
+[2m2025-11-02T15:10:27.580392Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1plj68pveatg6dn20kkhryn2ssxvn8924l6uk695f4fvd2xltd2vkqn5f6td
+[2m2025-11-02T15:10:27.580440Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pj50jpf3c7hhf9zt5962ar7ms4wrqmeh6hvnepg4pxdf2au0gx83qwrpzfc
+[2m2025-11-02T15:10:27.580489Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1pq7m5c3dm6sue655wclscalfkmn9d5tfckrjwfnj3qkkw280fh29smq6v9t
+[2m2025-11-02T15:10:27.580547Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Address: tb1p6krqnnkpzaz8vl93knrzxc0kc7h0jdaautdmwzgdc7er955tm54szvumcd
+[2m2025-11-02T15:12:48.608106Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m User 5984120724 balance: 3490 sats
+[2m2025-11-02T15:12:48.608655Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0m4c5b15da-07ef-490f-b571-b8c5d381235c [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 141.042233298s
+[2m2025-11-02T15:12:49.870845Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_transfer [3mrequest_id[0m[2m=[0mc22fd2c4-4de2-42cc-a32f-ac7b38012b6d[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
+[2m2025-11-02T15:12:49.871046Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_transfer [3mrequest_id[0m[2m=[0mc22fd2c4-4de2-42cc-a32f-ac7b38012b6d[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Virtual transfer request: user 5984120724 -> user 6512903955 (100 sats)
+[2m2025-11-02T15:15:10.087984Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_transfer [3mrequest_id[0m[2m=[0mc22fd2c4-4de2-42cc-a32f-ac7b38012b6d[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m Balance check passed: user 5984120724 has 3490 sats, transferring 100 sats
+[2m2025-11-02T15:15:10.088261Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/virtual_transfer [3mrequest_id[0m[2m=[0mc22fd2c4-4de2-42cc-a32f-ac7b38012b6d[1m}[0m[2m:[0m [2mrgb_lightning_node::virtual_balance[0m[2m:[0m Creating REAL Bitcoin transfer: 5984120724 -> 6512903955 (100 sats)
+[2m2025-11-02T15:19:50.531295Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m135.114µs [3melapsed_secs[0m[2m=[0m0.000135114
+[2m2025-11-02T15:22:57.602463Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/sendbtc [3mrequest_id[0m[2m=[0m05ce4164-e3d2-4816-bd1d-39203122c8c5[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
+[2m2025-11-02T15:22:57.604001Z[0m [33m WARN[0m [2melectrum_client::client[0m[2m:[0m call 'block_headers_subscribe_raw' failed with EOF while parsing a value at line 1 column 0, retry: 1/3    
+[2m2025-11-02T15:22:59.612083Z[0m [32m INFO[0m [2melectrum_client::raw_client[0m[2m:[0m Trying to connect to 34.154.172.18:50013 (attempt 1/1) with timeout 10s    
+[2m2025-11-02T15:22:59.750092Z[0m [32m INFO[0m [2melectrum_client::client[0m[2m:[0m Succesfully created new client    
+[2m2025-11-02T15:23:02.145395Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"txo\".\"idx\", \"txo\".\"txid\", \"txo\".\"vout\", …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"txo\".\"idx\", \"txo\".\"txid\", \"txo\".\"vout\", \"txo\".\"btc_amount\", \"txo\".\"spent\", \"txo\".\"exists\", \"txo\".\"pending_witness\" FROM \"txo\"\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m386.942µs [3melapsed_secs[0m[2m=[0m0.000386942
+[2m2025-11-02T15:23:02.146097Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m28.723µs [3melapsed_secs[0m[2m=[0m2.8723e-5
+[2m2025-11-02T15:23:02.146640Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"pending_witness_script\".\"idx\", \"pending_witness_script\".\"script\" FROM …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"pending_witness_script\".\"idx\", \"pending_witness_script\".\"script\" FROM \"pending_witness_script\"\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m358.469µs [3melapsed_secs[0m[2m=[0m0.000358469
+[2m2025-11-02T15:23:02.147036Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"txo\".\"idx\", \"txo\".\"txid\", \"txo\".\"vout\", …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"txo\".\"idx\", \"txo\".\"txid\", \"txo\".\"vout\", \"txo\".\"btc_amount\", \"txo\".\"spent\", \"txo\".\"exists\", \"txo\".\"pending_witness\" FROM \"txo\"\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m26.767µs [3melapsed_secs[0m[2m=[0m2.6767e-5
+[2m2025-11-02T15:23:02.148572Z[0m [31mERROR[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/sendbtc [3mrequest_id[0m[2m=[0m05ce4164-e3d2-4816-bd1d-39203122c8c5[1m}[0m[2m:[0m [2mrgb_lightning_node::error[0m[2m:[0m APIError: Output below the dust limit
+[2m2025-11-02T15:23:02.148728Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/sendbtc [3mrequest_id[0m[2m=[0m05ce4164-e3d2-4816-bd1d-39203122c8c5 [3mstatus_code[0m[2m=[0m400 Bad Request[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 4.546404839s
+[2m2025-11-02T15:23:31.369255Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/sendbtc [3mrequest_id[0m[2m=[0mf2036d60-5c42-4f3f-8479-0550539f410c[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
+[2m2025-11-02T15:23:33.218431Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"txo\".\"idx\", \"txo\".\"txid\", \"txo\".\"vout\", …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"txo\".\"idx\", \"txo\".\"txid\", \"txo\".\"vout\", \"txo\".\"btc_amount\", \"txo\".\"spent\", \"txo\".\"exists\", \"txo\".\"pending_witness\" FROM \"txo\"\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m196.038µs [3melapsed_secs[0m[2m=[0m0.000196038
+[2m2025-11-02T15:23:33.219275Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"pending_witness_script\".\"idx\", \"pending_witness_script\".\"script\" FROM …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"pending_witness_script\".\"idx\", \"pending_witness_script\".\"script\" FROM \"pending_witness_script\"\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m113.019µs [3melapsed_secs[0m[2m=[0m0.000113019
+[2m2025-11-02T15:23:33.219855Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"txo\".\"idx\", \"txo\".\"txid\", \"txo\".\"vout\", …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"txo\".\"idx\", \"txo\".\"txid\", \"txo\".\"vout\", \"txo\".\"btc_amount\", \"txo\".\"spent\", \"txo\".\"exists\", \"txo\".\"pending_witness\" FROM \"txo\"\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m48.916µs [3melapsed_secs[0m[2m=[0m4.8916e-5
+[2m2025-11-02T15:23:35.409872Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"txo\".\"idx\", \"txo\".\"txid\", \"txo\".\"vout\", …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"txo\".\"idx\", \"txo\".\"txid\", \"txo\".\"vout\", \"txo\".\"btc_amount\", \"txo\".\"spent\", \"txo\".\"exists\", \"txo\".\"pending_witness\" FROM \"txo\"\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m126.894µs [3melapsed_secs[0m[2m=[0m0.000126894
+[2m2025-11-02T15:23:35.411615Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT \"pending_witness_script\".\"idx\", \"pending_witness_script\".\"script\" FROM …" [3mdb.statement[0m[2m=[0m"\n\nSELECT \"pending_witness_script\".\"idx\", \"pending_witness_script\".\"script\" FROM \"pending_witness_script\"\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m101.737µs [3melapsed_secs[0m[2m=[0m0.000101737
+[2m2025-11-02T15:23:35.412539Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/sendbtc [3mrequest_id[0m[2m=[0mf2036d60-5c42-4f3f-8479-0550539f410c [3mstatus_code[0m[2m=[0m200 OK[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 4.043300649s
+[2m2025-11-02T15:29:50.533990Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m133.131µs [3melapsed_secs[0m[2m=[0m0.000133131
+[2m2025-11-02T15:39:50.537366Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m135.813µs [3melapsed_secs[0m[2m=[0m0.000135813
+[2m2025-11-02T15:44:50.889378Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m134.175µs [3melapsed_secs[0m[2m=[0m0.000134175
+[2m2025-11-02T15:49:50.891595Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m78.82µs [3melapsed_secs[0m[2m=[0m7.882e-5
+[2m2025-11-02T15:54:50.893883Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m138.7µs [3melapsed_secs[0m[2m=[0m0.0001387
+[2m2025-11-02T16:04:50.896558Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m121.954µs [3melapsed_secs[0m[2m=[0m0.000121954
+[2m2025-11-02T17:17:07.596600Z[0m [31mERROR[0m [2mrgb_lightning_node::ldk[0m[2m:[0m Error while polling best tip: BlockSourceError { kind: Transient, error: Custom { kind: Uncategorized, error: "failed to lookup address information: Temporary failure in name resolution" } }
+[2m2025-11-02T17:17:08.600231Z[0m [31mERROR[0m [2mrgb_lightning_node::ldk[0m[2m:[0m Error while polling best tip: BlockSourceError { kind: Transient, error: Custom { kind: Uncategorized, error: "failed to lookup address information: Temporary failure in name resolution" } }
+[2m2025-11-02T17:17:09.602188Z[0m [31mERROR[0m [2mrgb_lightning_node::ldk[0m[2m:[0m Error while polling best tip: BlockSourceError { kind: Transient, error: Custom { kind: Uncategorized, error: "failed to lookup address information: Temporary failure in name resolution" } }
+[2m2025-11-02T17:17:10.604242Z[0m [31mERROR[0m [2mrgb_lightning_node::ldk[0m[2m:[0m Error while polling best tip: BlockSourceError { kind: Transient, error: Custom { kind: Uncategorized, error: "failed to lookup address information: Temporary failure in name resolution" } }
+[2m2025-11-02T17:17:11.607884Z[0m [31mERROR[0m [2mrgb_lightning_node::ldk[0m[2m:[0m Error while polling best tip: BlockSourceError { kind: Transient, error: Custom { kind: Uncategorized, error: "failed to lookup address information: Temporary failure in name resolution" } }
+[2m2025-11-02T17:18:47.286244Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m149.578µs [3melapsed_secs[0m[2m=[0m0.000149578
+[2m2025-11-02T17:26:06.127546Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0mabee3bfe-6237-492e-8e30-b90b2e64bb7e[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
+[2m2025-11-02T17:26:06.128159Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/btcbalance [3mrequest_id[0m[2m=[0mabee3bfe-6237-492e-8e30-b90b2e64bb7e[1m}[0m[2m:[0m [2mrgb_lightning_node::routes[0m[2m:[0m btc_balance called with payload: Object {"user_id": String("5984120724")}
+[2m2025-11-02T17:28:47.289787Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m133.745µs [3melapsed_secs[0m[2m=[0m0.000133745
+[2m2025-11-02T17:38:47.292125Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m121.412µs [3melapsed_secs[0m[2m=[0m0.000121412
+[2m2025-11-02T17:48:47.296001Z[0m [32m INFO[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"PRAGMA foreign_keys = ON; …" [3mdb.statement[0m[2m=[0m"\n\nPRAGMA foreign_keys = ON; \n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m171.763µs [3melapsed_secs[0m[2m=[0m0.000171763

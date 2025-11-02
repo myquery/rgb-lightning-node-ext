@@ -509,6 +509,12 @@ pub enum AppError {
     Database(String),
     #[error("Generic error: {0}")]
     Generic(String),
+    #[error("Invalid request: {0}")]
+    InvalidRequest(String),
+    #[error("Insufficient balance")]
+    InsufficientBalance,
+    #[error("User not found")]
+    UserNotFound,
 }
 
 impl From<anyhow::Error> for AppError {

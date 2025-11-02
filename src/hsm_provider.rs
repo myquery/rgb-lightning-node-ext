@@ -61,13 +61,13 @@ impl CloudHsmProvider {
 
 #[async_trait]
 impl HsmProvider for CloudHsmProvider {
-    async fn derive_virtual_node_id(&self, user_id: &str) -> Result<PublicKey, HsmError> {
+    async fn derive_virtual_node_id(&self, _user_id: &str) -> Result<PublicKey, HsmError> {
         // TODO: Implement cloud HSM integration
         // This would call AWS KMS, Azure Key Vault, etc.
         Err(HsmError::Connection("Cloud HSM not implemented".to_string()))
     }
 
-    async fn get_virtual_keys_manager(&self, user_id: &str) -> Result<VirtualKeysManager, HsmError> {
+    async fn get_virtual_keys_manager(&self, _user_id: &str) -> Result<VirtualKeysManager, HsmError> {
         // TODO: Implement cloud HSM integration
         Err(HsmError::Connection("Cloud HSM not implemented".to_string()))
     }
@@ -86,13 +86,13 @@ impl HardwareHsmProvider {
 
 #[async_trait]
 impl HsmProvider for HardwareHsmProvider {
-    async fn derive_virtual_node_id(&self, user_id: &str) -> Result<PublicKey, HsmError> {
+    async fn derive_virtual_node_id(&self, _user_id: &str) -> Result<PublicKey, HsmError> {
         // TODO: Implement hardware HSM integration
         // This would interface with PKCS#11, etc.
         Err(HsmError::Connection("Hardware HSM not implemented".to_string()))
     }
 
-    async fn get_virtual_keys_manager(&self, user_id: &str) -> Result<VirtualKeysManager, HsmError> {
+    async fn get_virtual_keys_manager(&self, _user_id: &str) -> Result<VirtualKeysManager, HsmError> {
         // TODO: Implement hardware HSM integration
         Err(HsmError::Connection("Hardware HSM not implemented".to_string()))
     }

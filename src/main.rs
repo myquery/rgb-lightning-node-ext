@@ -1,6 +1,7 @@
 mod args;
 mod backup;
 mod bitcoind;
+mod blockchain_balance;
 mod database;
 mod disk;
 mod error;
@@ -23,7 +24,10 @@ mod virtual_channel;
 mod virtual_htlc;
 mod virtual_balance;
 mod virtual_router;
+mod lightning_router;
 mod virtual_api;
+mod inbound_payment_handler;
+mod test_utils;
 
 #[cfg(test)]
 mod test {
@@ -69,7 +73,7 @@ use crate::routes::{
     list_peers, list_swaps, list_transactions, list_transfers, list_unspents, ln_invoice, lock,
     maker_execute, maker_init, network_info, node_info, open_channel, post_asset_media,
     refresh_transfers, restore, rgb_invoice, send_asset, send_btc, send_onion_message,
-    send_payment, shutdown, sign_message, sync, taker, unlock,
+    send_payment, shutdown, sign_message, sync, taker, unlock, virtual_transfer, payment_webhook,
 };
 use crate::utils::{start_daemon, AppState, LOGS_DIR};
 use crate::telegram_integration::TelegramIntegration;
@@ -196,6 +200,11 @@ pub(crate) async fn app(args: LdkUserInfo) -> Result<(Router, Arc<AppState>), Ap
         .route("/virtual_rgbinvoice", post(crate::virtual_api::virtual_rgbinvoice))
         .route("/virtual_sendpayment", post(crate::virtual_api::virtual_sendpayment))
         .route("/virtual_assetbalance", post(crate::virtual_api::virtual_assetbalance))
+        .route("/virtual_transfer", post(crate::routes::virtual_transfer))
+        .route("/webhook/payment", post(crate::routes::payment_webhook))
+        // Test endpoints (for development/testing only)
+        .route("/test/add_utxo", post(crate::test_utils::add_test_utxo))
+        .route("/test/add_address", post(crate::test_utils::add_test_address))
         // Telegram bot integration routes
         .nest("/telegram", user_api_routes())
         .layer(

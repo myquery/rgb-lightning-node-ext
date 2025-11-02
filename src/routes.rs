@@ -737,6 +737,7 @@ pub(crate) struct ListTransfersResponse {
 #[derive(Deserialize, Serialize)]
 pub(crate) struct ListUnspentsRequest {
     pub(crate) skip_sync: bool,
+    pub(crate) user_id: Option<String>, // Optional user_id for user-specific UTXO listing
 }
 
 #[derive(Deserialize, Serialize)]
@@ -1231,7 +1232,7 @@ pub(crate) async fn address(
             }
         }
         
-        if let (Some(user_manager), Some(_database)) = (state.user_manager.lock().await.as_ref(), state.database.lock().await.as_ref()) {
+        if let (Some(user_manager), Some(database)) = (state.user_manager.lock().await.as_ref(), state.database.lock().await.as_ref()) {
             if let Some(user_id) = crate::user_manager::UserManager::extract_user_id(&payload, &axum::http::HeaderMap::new()) {
                 // Generate user-specific address
                 let address = unlocked_state.rgb_get_address()?;
@@ -1263,8 +1264,15 @@ pub(crate) async fn asset_balance(
         .map_err(|_| APIError::InvalidAssetID(asset_id.to_string()))?;
 
     // Check for multi-user support
-    if let (Some(user_manager), Some(_database)) = (state.user_manager.lock().await.as_ref(), state.database.lock().await.as_ref()) {
+    if let (Some(user_manager), Some(database)) = (state.user_manager.lock().await.as_ref(), state.database.lock().await.as_ref()) {
         if let Some(user_id) = crate::user_manager::UserManager::extract_user_id(&payload, &axum::http::HeaderMap::new()) {
+            // Ensure virtual node ID is saved for this user
+            if let Some(hsm_service) = state.hsm_service.lock().await.as_ref() {
+                if let Ok(virtual_node_id) = hsm_service.derive_virtual_node_id(&user_id).await {
+                    let _ = user_manager.save_virtual_node_id(&user_id, &virtual_node_id.to_string()).await;
+                }
+            }
+            
             // Get user-specific asset balance from database
             let balance = user_manager.get_user_balance(&user_id, Some(asset_id)).await
                 .map_err(|e| APIError::Unexpected(e.to_string()))? as u64;
@@ -1363,13 +1371,28 @@ pub(crate) async fn btc_balance(
     let unlocked_state = state.check_unlocked().await?.clone().unwrap();
     
     let skip_sync = payload.get("skip_sync").and_then(|v| v.as_bool()).unwrap_or(false);
+    
+    tracing::info!("btc_balance called with payload: {:?}", payload);
 
     // Check for multi-user support
-    if let (Some(user_manager), Some(_database)) = (state.user_manager.lock().await.as_ref(), state.database.lock().await.as_ref()) {
+    if let (Some(user_manager), Some(database)) = (state.user_manager.lock().await.as_ref(), state.database.lock().await.as_ref()) {
         if let Some(user_id) = crate::user_manager::UserManager::extract_user_id(&payload, &axum::http::HeaderMap::new()) {
-            // Get user-specific balance from database
+            tracing::info!("Processing btc_balance for user: {}", user_id);
+            
+            // Get user context to ensure addresses exist
+            let user_context = user_manager.get_user_context(&user_id).await
+                .map_err(|e| APIError::Unexpected(e.to_string()))?;
+            
+            tracing::info!("User {} has {} addresses", user_id, user_context.addresses.len());
+            for addr in &user_context.addresses {
+                tracing::info!("Address: {}", addr);
+            }
+            
+            // Use new HTTP API blockchain method directly
             let btc_balance_settled = user_manager.get_user_balance(&user_id, None).await
                 .map_err(|e| APIError::Unexpected(e.to_string()))? as u64;
+            
+            tracing::info!("User {} balance: {} sats", user_id, btc_balance_settled);
             
             let vanilla = BtcBalance {
                 settled: btc_balance_settled,
@@ -2504,6 +2527,12 @@ pub(crate) async fn list_unspents(
 ) -> Result<Json<ListUnspentsResponse>, APIError> {
     let unlocked_state = state.check_unlocked().await?.clone().unwrap();
 
+    // Check if user_id is provided for user-specific UTXO listing
+    if let Some(user_id) = payload.user_id {
+        return list_user_unspents(state, user_id).await;
+    }
+
+    // Default behavior: list all UTXOs from RGB wallet
     let mut unspents = vec![];
     for unspent in unlocked_state.rgb_list_unspents(payload.skip_sync)? {
         unspents.push(Unspent {
@@ -2524,6 +2553,54 @@ pub(crate) async fn list_unspents(
         })
     }
     Ok(Json(ListUnspentsResponse { unspents }))
+}
+
+// Helper function to list UTXOs for a specific user using blockchain queries
+async fn list_user_unspents(
+    state: Arc<AppState>,
+    user_id: String,
+) -> Result<Json<ListUnspentsResponse>, APIError> {
+    // Get database connection
+    let database = state.database.lock().await;
+    if let Some(db) = database.as_ref() {
+        // Get user manager with blockchain service
+        let user_manager = state.user_manager.lock().await;
+        if let Some(user_mgr) = user_manager.as_ref() {
+            if let Some(blockchain_service) = &user_mgr.blockchain_balance_service {
+                // Get user's Bitcoin addresses
+                let addresses = db.get_user_addresses(&user_id).await
+                    .map_err(|e| APIError::Unexpected(e.to_string()))?;
+                
+                let mut unspents = vec![];
+                
+                // Query blockchain UTXOs for each user address
+                for address in addresses {
+                    match blockchain_service.get_address_utxo_details(&address).await {
+                        Ok(utxo_details) => {
+                            for utxo in utxo_details {
+                                unspents.push(Unspent {
+                                    utxo: Utxo {
+                                        outpoint: format!("{}:{}", utxo.txid, utxo.vout),
+                                        btc_amount: utxo.amount_sats as u64,
+                                        colorable: true, // Assume colorable for user UTXOs
+                                    },
+                                    rgb_allocations: vec![], // No RGB allocations from blockchain query
+                                });
+                            }
+                        }
+                        Err(e) => {
+                            tracing::warn!("Failed to get UTXOs for address {}: {}", address, e);
+                        }
+                    }
+                }
+                
+                return Ok(Json(ListUnspentsResponse { unspents }));
+            }
+        }
+    }
+    
+    // Fallback: return empty list if blockchain service not available
+    Ok(Json(ListUnspentsResponse { unspents: vec![] }))
 }
 
 pub(crate) async fn ln_invoice(
@@ -3745,35 +3822,102 @@ pub(crate) async fn virtual_node_id(
     })))
 }
 
+#[derive(serde::Deserialize)]
+pub(crate) struct VirtualTransferRequest {
+    pub(crate) from_user_id: i64,  // telegram_id
+    pub(crate) to_user_id: i64,    // telegram_id
+    pub(crate) amount_sats: u64,
+}
+
+#[derive(serde::Serialize)]
+pub(crate) struct VirtualTransferResponse {
+    pub(crate) success: bool,
+    pub(crate) transaction_id: Option<String>,
+    pub(crate) error: Option<String>,
+}
+
 pub(crate) async fn virtual_transfer(
     State(state): State<Arc<AppState>>,
-    WithRejection(Json(payload), _): WithRejection<Json<serde_json::Value>, APIError>,
-) -> Result<Json<serde_json::Value>, APIError> {
-    let _unlocked_state = state.check_unlocked().await?.clone().unwrap();
+    WithRejection(Json(payload), _): WithRejection<Json<VirtualTransferRequest>, APIError>,
+) -> Result<Json<VirtualTransferResponse>, APIError> {
+    let unlocked_state = state.check_unlocked().await?.clone().unwrap();
     
-    let sender_user_id = payload.get("sender_user_id")
-        .and_then(|v| v.as_str())
-        .ok_or(APIError::Unexpected("Missing sender_user_id".to_string()))?;
+    tracing::info!("Virtual transfer request: user {} -> user {} ({} sats)", 
+        payload.from_user_id, payload.to_user_id, payload.amount_sats);
     
-    let recipient_user_id = payload.get("recipient_user_id")
-        .and_then(|v| v.as_str())
-        .ok_or(APIError::Unexpected("Missing recipient_user_id".to_string()))?;
+    // Initialize multi-user database on-demand if not already initialized
+    if std::env::var("DATABASE_URL").is_ok() {
+        if state.database.lock().await.is_none() {
+            tracing::info!("Initializing multi-user database on-demand for virtual transfer...");
+            if let Err(e) = crate::utils::initialize_database_after_unlock(&state).await {
+                tracing::error!("Failed to initialize multi-user database: {}", e);
+                return Ok(Json(VirtualTransferResponse {
+                    success: false,
+                    transaction_id: None,
+                    error: Some(format!("Database initialization failed: {}", e)),
+                }));
+            }
+        }
+    }
     
-    let amount_sats = payload.get("amount_sats")
-        .and_then(|v| v.as_u64())
-        .ok_or(APIError::Unexpected("Missing amount_sats".to_string()))?;
-    
-    // Generate transfer ID
-    let transfer_id = format!("vt_{}_{}_{}_{}", 
-        sender_user_id, recipient_user_id, amount_sats, chrono::Utc::now().timestamp());
-    
-    tracing::info!("Virtual transfer: {} -> {} ({} sats)", 
-        sender_user_id, recipient_user_id, amount_sats);
-    
-    Ok(Json(serde_json::json!({
-        "transfer_id": transfer_id,
-        "status": "completed"
-    })))
+    // Get database connection
+    let database = state.database.lock().await;
+    if let Some(db) = database.as_ref() {
+        // Check sender's balance using blockchain service if available
+        let user_manager = state.user_manager.lock().await;
+        if let Some(user_mgr) = user_manager.as_ref() {
+            let sender_balance = user_mgr.get_user_balance(&payload.from_user_id.to_string(), None).await
+                .unwrap_or(0);
+            
+            if sender_balance < payload.amount_sats as i64 {
+                return Ok(Json(VirtualTransferResponse {
+                    success: false,
+                    transaction_id: None,
+                    error: Some(format!("Insufficient balance: {} sats available, {} sats requested", sender_balance, payload.amount_sats)),
+                }));
+            }
+            
+            tracing::info!("Balance check passed: user {} has {} sats, transferring {} sats", 
+                payload.from_user_id, sender_balance, payload.amount_sats);
+        }
+        
+        // Create virtual balance manager
+        let balance_manager = crate::virtual_balance::VirtualBalanceManager::new(Arc::new(db.clone()));
+        
+        // Execute virtual transfer
+        match balance_manager.execute_virtual_transfer(
+            payload.from_user_id,
+            payload.to_user_id,
+            payload.amount_sats,
+            &unlocked_state,
+            &state,
+        ).await {
+            Ok(transaction_id) => {
+                tracing::info!("Virtual transfer completed: {} -> {} ({} sats), tx: {}", 
+                    payload.from_user_id, payload.to_user_id, payload.amount_sats, transaction_id);
+                
+                Ok(Json(VirtualTransferResponse {
+                    success: true,
+                    transaction_id: Some(transaction_id),
+                    error: None,
+                }))
+            }
+            Err(e) => {
+                tracing::error!("Virtual transfer failed: {}", e);
+                Ok(Json(VirtualTransferResponse {
+                    success: false,
+                    transaction_id: None,
+                    error: Some(e.to_string()),
+                }))
+            }
+        }
+    } else {
+        Ok(Json(VirtualTransferResponse {
+            success: false,
+            transaction_id: None,
+            error: Some("Database not available".to_string()),
+        }))
+    }
 }
 
 pub(crate) async fn unlock(
@@ -3835,4 +3979,39 @@ pub(crate) async fn unlock(
         Ok(Json(EmptyResponse {}))
     })
     .await
+}
+
+#[derive(serde::Deserialize)]
+pub(crate) struct PaymentWebhookRequest {
+    pub(crate) payment_hash: String,
+    pub(crate) amount_msat: u64,
+    pub(crate) metadata: Option<String>,
+}
+
+pub(crate) async fn payment_webhook(
+    State(state): State<Arc<AppState>>,
+    WithRejection(Json(payload), _): WithRejection<Json<PaymentWebhookRequest>, APIError>,
+) -> Result<Json<EmptyResponse>, APIError> {
+    let _unlocked_state = state.check_unlocked().await?.clone().unwrap();
+    
+    tracing::info!("Received payment webhook: hash={}, amount={} msat", 
+        payload.payment_hash, payload.amount_msat);
+    
+    // Process inbound payment
+    let handler = crate::inbound_payment_handler::InboundPaymentHandler::new(state);
+    
+    match handler.handle_payment_webhook(
+        payload.payment_hash,
+        payload.amount_msat,
+        payload.metadata,
+    ).await {
+        Ok(_) => {
+            tracing::info!("Inbound payment processed successfully");
+            Ok(Json(EmptyResponse {}))
+        }
+        Err(e) => {
+            tracing::error!("Failed to process inbound payment: {}", e);
+            Err(APIError::Unexpected(e.to_string()))
+        }
+    }
 }

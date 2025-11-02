@@ -34,6 +34,8 @@ use crate::rgb::{get_rgb_channel_info_optional, RgbLibWalletWrapper};
 use crate::routes::{DEFAULT_FINAL_CLTV_EXPIRY_DELTA, HTLC_MIN_MSAT};
 use crate::{
     args::LdkUserInfo,
+    bitcoind::BitcoindClient,
+    blockchain_balance::BlockchainBalanceService,
     database::Database,
     disk::FilesystemLogger,
     error::{APIError, AppError},
@@ -116,6 +118,7 @@ pub(crate) struct UnlockedAppState {
     pub(crate) rgb_send_lock: Arc<Mutex<bool>>,
     pub(crate) channel_ids_map: Arc<Mutex<ChannelIdsMap>>,
     pub(crate) proxy_endpoint: String,
+    pub(crate) bitcoind_client: Arc<BitcoindClient>,
 }
 
 impl UnlockedAppState {
@@ -469,7 +472,19 @@ pub(crate) async fn initialize_database_after_unlock(app_state: &Arc<AppState>) 
         // Note: RGB database adapter disabled to avoid conflicts during RGB library initialization
         // RGB library will use its own SQLite database in separate directory
         
-        let user_mgr = UserManager::new(db.clone());
+        // Initialize blockchain balance service if BitcoindClient is available
+        let user_mgr = if let Some(unlocked_state) = app_state.get_unlocked_app_state().await.as_ref() {
+            // Try to get BitcoindClient from RGB wallet wrapper
+            if let Ok(bitcoind_client) = get_bitcoind_client_from_unlocked_state(unlocked_state) {
+                let blockchain_service = Arc::new(BlockchainBalanceService::new(bitcoind_client));
+                UserManager::with_blockchain_service(db.clone(), blockchain_service)
+            } else {
+                tracing::warn!("BitcoindClient not available, using database fallback for balance queries");
+                UserManager::new(db.clone())
+            }
+        } else {
+            UserManager::new(db.clone())
+        };
         
         *app_state.database.lock().await = Some(db);
         *app_state.user_manager.lock().await = Some(user_mgr.clone());
@@ -487,4 +502,10 @@ pub(crate) async fn initialize_database_after_unlock(app_state: &Arc<AppState>) 
     }
     
     Ok(())
+}
+
+// Helper function to extract BitcoindClient from unlocked state
+fn get_bitcoind_client_from_unlocked_state(unlocked_state: &UnlockedAppState) -> Result<Arc<BitcoindClient>, AppError> {
+    // Return the BitcoindClient that's now stored in UnlockedAppState
+    Ok(unlocked_state.bitcoind_client.clone())
 }

@@ -8,6 +8,7 @@ use crate::utils::AppState;
 
 #[derive(Deserialize)]
 pub struct VirtualRgbInvoiceRequest {
+    pub user_id: String,  // bitMaskRGB sends user_id
     pub asset_id: Option<String>,
     pub duration_seconds: Option<u32>,
     pub min_confirmations: Option<u8>,
@@ -23,6 +24,7 @@ pub struct VirtualRgbInvoiceResponse {
 
 #[derive(Deserialize)]
 pub struct VirtualSendPaymentRequest {
+    pub user_id: String,  // bitMaskRGB sends user_id
     pub invoice: String,
     pub amt_msat: Option<u64>,
 }
@@ -36,6 +38,7 @@ pub struct VirtualSendPaymentResponse {
 
 #[derive(Deserialize)]
 pub struct VirtualAssetBalanceRequest {
+    pub user_id: String,  // bitMaskRGB sends user_id
     pub asset_id: String,
 }
 
@@ -52,6 +55,8 @@ pub async fn virtual_rgbinvoice(
     State(app_state): State<Arc<AppState>>,
     WithRejection(Json(req), rejection): WithRejection<Json<VirtualRgbInvoiceRequest>, APIError>,
 ) -> Result<Json<VirtualRgbInvoiceResponse>, APIError> {
+    tracing::info!("Virtual RGB invoice request for user_id: {}", req.user_id);
+    
     let response = crate::routes::rgb_invoice(State(app_state), WithRejection(Json(crate::routes::RgbInvoiceRequest {
         asset_id: req.asset_id,
         duration_seconds: req.duration_seconds,
@@ -68,24 +73,34 @@ pub async fn virtual_rgbinvoice(
 
 pub async fn virtual_sendpayment(
     State(app_state): State<Arc<AppState>>,
-    WithRejection(Json(req), rejection): WithRejection<Json<VirtualSendPaymentRequest>, APIError>,
+    WithRejection(Json(req), _rejection): WithRejection<Json<VirtualSendPaymentRequest>, APIError>,
 ) -> Result<Json<VirtualSendPaymentResponse>, APIError> {
-    let response = crate::routes::send_payment(State(app_state), WithRejection(Json(crate::routes::SendPaymentRequest {
-        invoice: req.invoice,
-        amt_msat: req.amt_msat,
-    }), rejection)).await?;
+    tracing::info!("Virtual send payment request for user_id: {}", req.user_id);
     
-    Ok(Json(VirtualSendPaymentResponse {
-        payment_id: response.payment_id.clone(),
-        payment_hash: response.payment_hash.clone(),
-        status: format!("{:?}", response.status),
-    }))
+    // Use Lightning router for external payments through master node
+    let lightning_router = crate::lightning_router::LightningRouter::new(app_state);
+    
+    match lightning_router.send_lightning_payment(req.invoice, req.amt_msat).await {
+        Ok(response) => Ok(Json(VirtualSendPaymentResponse {
+            payment_id: response.payment_id,
+            payment_hash: response.payment_hash,
+            status: response.status,
+        })),
+        Err(e) => Err(APIError::FailedPayment(e.to_string())),
+    }
 }
 
 pub async fn virtual_assetbalance(
     State(app_state): State<Arc<AppState>>,
-    WithRejection(Json(payload), rejection): WithRejection<Json<serde_json::Value>, APIError>,
+    WithRejection(Json(req), rejection): WithRejection<Json<VirtualAssetBalanceRequest>, APIError>,
 ) -> Result<Json<VirtualAssetBalanceResponse>, APIError> {
+    tracing::info!("Virtual asset balance request for user_id: {} asset_id: {}", req.user_id, req.asset_id);
+    
+    // Convert to the format expected by asset_balance endpoint
+    let payload = serde_json::json!({
+        "asset_id": req.asset_id
+    });
+    
     let response = crate::routes::asset_balance(State(app_state), WithRejection(Json(payload), rejection)).await?;
     
     Ok(Json(VirtualAssetBalanceResponse {

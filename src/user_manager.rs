@@ -1,12 +1,15 @@
 use crate::database::Database;
 use crate::error::AppError;
+use crate::blockchain_balance::BlockchainBalanceService;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct UserManager {
     database: Database,
+    pub blockchain_balance_service: Option<Arc<BlockchainBalanceService>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -18,7 +21,17 @@ pub struct UserContext {
 
 impl UserManager {
     pub fn new(database: Database) -> Self {
-        Self { database }
+        Self { 
+            database,
+            blockchain_balance_service: None,
+        }
+    }
+
+    pub fn with_blockchain_service(database: Database, blockchain_service: Arc<BlockchainBalanceService>) -> Self {
+        Self {
+            database,
+            blockchain_balance_service: Some(blockchain_service),
+        }
     }
 
     /// Extract user_id from request body or headers
@@ -79,10 +92,106 @@ impl UserManager {
         Ok(())
     }
 
-    /// Get user balance
+    /// Get user balance using blockchain-based approach (most accurate)
     pub async fn get_user_balance(&self, user_id: &str, asset_id: Option<&str>) -> Result<i64, AppError> {
+        // For BTC, use blockchain-based balance (most accurate)
+        if asset_id.is_none() || asset_id == Some("BTC") {
+            return self.get_btc_balance_from_blockchain(user_id).await;
+        }
+        
+        // For other assets, use database
         self.database.get_user_balance(user_id, asset_id).await
             .map_err(|e| AppError::Database(e.to_string()))
+    }
+    
+    /// Get BTC balance from blockchain using user's Bitcoin addresses
+    async fn get_btc_balance_from_blockchain(&self, user_id: &str) -> Result<i64, AppError> {
+        // Get user's Bitcoin addresses from database
+        let addresses = self.database.get_user_addresses(user_id).await
+            .map_err(|e| AppError::Database(e.to_string()))?;
+        
+        if addresses.is_empty() {
+            return Ok(0);
+        }
+        
+        let mut total_balance = 0i64;
+        let mut successful_queries = 0;
+        
+        // Query blockchain for each address
+        for address in addresses {
+            match self.query_address_balance(&address).await {
+                Ok(balance) => {
+                    total_balance += balance;
+                    successful_queries += 1;
+                },
+                Err(e) => {
+                    tracing::warn!("Failed to get balance for address {}: {}", address, e);
+                    // Continue with other addresses instead of failing completely
+                }
+            }
+        }
+        
+        // If all API calls failed due to rate limiting, return cached database balance
+        if successful_queries == 0 {
+            tracing::warn!("All blockchain API calls failed for user {}, falling back to database balance", user_id);
+            return self.database.get_user_balance(user_id, None).await
+                .map_err(|e| AppError::Database(e.to_string()));
+        }
+        
+        Ok(total_balance)
+    }
+    
+    /// Query blockchain API for address balance with rate limiting
+    async fn query_address_balance(&self, address: &str) -> Result<i64, AppError> {
+        let base_url = std::env::var("BLOCKCHAIN_NETWORK_URL")
+            .unwrap_or_else(|_| "https://blockstream.info/testnet/api".to_string());
+        let url = format!("{}/address/{}", base_url, address);
+        
+        let client = reqwest::Client::new();
+        
+        // Add delay to avoid rate limiting
+        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+        
+        let response = client.get(&url)
+            .timeout(std::time::Duration::from_secs(15))
+            .send()
+            .await
+            .map_err(|e| AppError::Generic(format!("HTTP request failed: {}", e)))?;
+        
+        if response.status() == 429 {
+            // Rate limited - wait longer and try once more
+            tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+            let retry_response = client.get(&url)
+                .timeout(std::time::Duration::from_secs(15))
+                .send()
+                .await
+                .map_err(|e| AppError::Generic(format!("Retry HTTP request failed: {}", e)))?;
+            
+            if !retry_response.status().is_success() {
+                return Err(AppError::Generic(format!("API retry returned status: {}", retry_response.status())));
+            }
+            
+            let json: serde_json::Value = retry_response.json().await
+                .map_err(|e| AppError::Generic(format!("Failed to parse retry JSON: {}", e)))?;
+            
+            let funded = json["chain_stats"]["funded_txo_sum"].as_u64().unwrap_or(0) as i64;
+            let spent = json["chain_stats"]["spent_txo_sum"].as_u64().unwrap_or(0) as i64;
+            
+            return Ok(funded - spent);
+        }
+        
+        if !response.status().is_success() {
+            return Err(AppError::Generic(format!("API returned status: {}", response.status())));
+        }
+        
+        let json: serde_json::Value = response.json().await
+            .map_err(|e| AppError::Generic(format!("Failed to parse JSON: {}", e)))?;
+        
+        // Get funded_txo_sum (total received) minus spent_txo_sum (total spent)
+        let funded = json["chain_stats"]["funded_txo_sum"].as_u64().unwrap_or(0) as i64;
+        let spent = json["chain_stats"]["spent_txo_sum"].as_u64().unwrap_or(0) as i64;
+        
+        Ok(funded - spent)
     }
 
     /// Save user transaction

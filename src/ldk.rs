@@ -1971,6 +1971,7 @@ pub(crate) async fn start_ldk(
         rgb_send_lock: Arc::new(Mutex::new(false)),
         channel_ids_map,
         proxy_endpoint: proxy_endpoint.to_string(),
+        bitcoind_client: bitcoind_client.clone(),
     });
 
     let recent_payments_payment_ids = channel_manager

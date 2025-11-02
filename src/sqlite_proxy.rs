@@ -22,6 +22,7 @@ impl SqliteProxy {
         // Create empty file to satisfy RGB library's existence check
         std::fs::write(&fake_db_path, "")?;
         
+        
         // Set environment variables to redirect database operations
         env::set_var("RGB_DATABASE_PATH", &fake_db_path);
         env::set_var("RGB_USE_POSTGRESQL", "true");

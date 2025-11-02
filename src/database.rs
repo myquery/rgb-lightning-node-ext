@@ -227,4 +227,52 @@ impl Database {
         .await?;
         Ok(row.and_then(|r| r.virtual_node_id))
     }
+
+    /// Execute atomic internal transfer between users
+    pub async fn execute_internal_transfer(
+        &self,
+        from_user_id: &str,
+        to_user_id: &str,
+        amount: i64,
+        asset_id: Option<&str>,
+        payment_id: &str,
+    ) -> Result<()> {
+        let mut tx = self.pool.begin().await?;
+        
+        // Deduct from sender
+        sqlx::query!(
+            "UPDATE ln_user_balances SET balance = balance - $3 WHERE user_id = $1 AND asset_id IS NOT DISTINCT FROM $2",
+            from_user_id, asset_id, amount
+        )
+        .execute(&mut *tx)
+        .await?;
+        
+        // Credit to receiver
+        sqlx::query!(
+            "INSERT INTO ln_user_balances (user_id, asset_id, balance, updated_at) VALUES ($1, $2, $3, NOW())
+             ON CONFLICT (user_id, COALESCE(asset_id, '')) DO UPDATE SET balance = ln_user_balances.balance + $3, updated_at = NOW()",
+            to_user_id, asset_id, amount
+        )
+        .execute(&mut *tx)
+        .await?;
+        
+        // Record transaction for sender
+        sqlx::query!(
+            "INSERT INTO ln_user_transactions (id, user_id, txid, amount, asset_id, status) VALUES ($1, $2, $3, $4, $5, 'completed')",
+            Uuid::new_v4(), from_user_id, payment_id, -amount, asset_id
+        )
+        .execute(&mut *tx)
+        .await?;
+        
+        // Record transaction for receiver
+        sqlx::query!(
+            "INSERT INTO ln_user_transactions (id, user_id, txid, amount, asset_id, status) VALUES ($1, $2, $3, $4, $5, 'completed')",
+            Uuid::new_v4(), to_user_id, payment_id, amount, asset_id
+        )
+        .execute(&mut *tx)
+        .await?;
+        
+        tx.commit().await?;
+        Ok(())
+    }
 }
