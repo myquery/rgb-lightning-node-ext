@@ -1,9 +1,0 @@
-[2m2025-11-02T15:08:51.237730Z[0m [32m INFO[0m [2mrgb_lightning_node::utils[0m[2m:[0m DATABASE_URL found - multi-user support will be enabled after unlock
-[2m2025-11-02T15:08:51.240885Z[0m [32m INFO[0m [2mrgb_lightning_node[0m[2m:[0m Listening on 0.0.0.0:3001
-[2m2025-11-02T15:09:02.550099Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/networkinfo [3mrequest_id[0m[2m=[0m2ca1a7f3-0d44-43ba-93c9-3ae8d4526f68[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m STARTED
-[2m2025-11-02T15:09:02.550459Z[0m [31mERROR[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/networkinfo [3mrequest_id[0m[2m=[0m2ca1a7f3-0d44-43ba-93c9-3ae8d4526f68[1m}[0m[2m:[0m [2mrgb_lightning_node::error[0m[2m:[0m APIError: Node is locked (hint: call unlock)
-[2m2025-11-02T15:09:02.550847Z[0m [32m INFO[0m [1mrequest[0m[1m{[0m[3muri[0m[2m=[0m/networkinfo [3mrequest_id[0m[2m=[0m2ca1a7f3-0d44-43ba-93c9-3ae8d4526f68 [3mstatus_code[0m[2m=[0m403 Forbidden[1m}[0m[2m:[0m [2mrgb_lightning_node[0m[2m:[0m ENDED in 904.344µs
-[2m2025-11-02T15:09:20.261651Z[0m [32m INFO[0m [2mrgb_lightning_node[0m[2m:[0m Received a shutdown signal
-[2m2025-11-02T15:09:20.261885Z[0m [32m INFO[0m [2mrgb_lightning_node::ldk[0m[2m:[0m Stopping LDK
-[2m2025-11-02T15:09:20.261945Z[0m [32m INFO[0m [2mrgb_lightning_node::ldk[0m[2m:[0m LDK is not running
-[2m2025-11-02T15:09:21.262805Z[0m [32m INFO[0m [2mrgb_lightning_node::ldk[0m[2m:[0m Stopped LDK
